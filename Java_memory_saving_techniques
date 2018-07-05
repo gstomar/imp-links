@@ -1,0 +1,236 @@
+An overview of memory saving techniques in Java
+by Mikhail Vorontsov
+
+This article will give you the general advices on memory consumption optimization in Java.
+
+Memory usage optimization is the most important type of optimization in Java. Current systems are limited by memory access times rather than by CPU frequency (otherwise, why CPU producers are implementing all these L1, L2 and L3 caches?). It means that by reducing your application memory footprint you will most likely improve your program data processing speed by making your CPU to wait for smaller amount of data. Now let’s get back to Java.
+
+General Java memory layout information
+
+First of all, we have to revise the memory layout of Java objects: any Java Object occupies at least 16 bytes, 12 out of which are occupied by a Java object header. Besides that, all Java objects are aligned by 8 bytes boundary. It means that, for example, an object containing 2 fields: int and byte will occupy not 17 (12 + 4 + 1), but 24 bytes (17 aligned by 8 bytes).
+
+Each Object reference occupies 4 bytes if the Java heap is under 32G and XX:+UseCompressedOops is turned on (it is turned on by default in the recent Oracle JVM versions). Otherwise, Object references occupy 8 bytes.
+
+All primitive data types occupy their exact byte size:
+
+byte, boolean	1 byte
+short, char	2 bytes
+int, float	4 bytes
+long, double	8 bytes
+In essence, this information is sufficient for Java memory optimization. But it will be more convenient if you will be aware of arrays / String / numeric wrappers memory consumption.
+
+
+Most common Java types memory consumption
+
+Arrays consume 12 bytes plus their length multiplied by their element size (and, of course, rounded by 8 bytes alignment).
+
+From Java 7 build 06 String contains 3 fields – a char[] with the string data plus 2 int fields with 2 hash codes calculated by the different algorithms. It means that a String itself needs 12 (header) + 4 (char[] reference) + 4 * 2 (int) = 24 bytes (as you can see, it exactly fits in 8 byte alignment). Besides that, a char[] with the String data occupies 12 + length * 2 bytes (plus alignment). It means that a String occupies 36 + length*2 bytes aligned by 8 bytes (which is, by the way, 8 byte less than a String memory consumption prior to Java 7 build 06).
+
+Numeric wrappers occupy 12 bytes plus size of the underlying type. Byte/Short/Character/Integer/Long are cached by JDK, so the actual memory consumption may be smaller for values in the range [-128; 127]. Anyway, these type may be the source of serious memory overhead in the collection-based applications:
+
+Byte, Boolean	16 bytes
+Short, Character	16 bytes
+Integer, Float	16 bytes
+Long, Double	24 bytes
+General Java memory optimization tips
+
+With all this knowledge at hand it is not difficult to give the general Java memory optimization tips:
+
+Prefer primitive types to their Object wrappers. The main cause of wrapper types usage are JDK collections, so consider using one of primitive type collection frameworks like Trove.
+Try to minimize number of Objects you have. For example, prefer array-based structures like ArrayList/ArrayDeque to pointer based structures like LinkedList.
+Java memory optimization example
+
+Here is an example. Suppose you have to create a map from int to 20 character long strings. The size of this map is equal to one million and all mappings are static and predefined (saved in some dictionary, for example).
+
+The first approach is to use a Map<Integer, String> from the standard JDK. Let’s roughly estimate the memory consumption of this structure. Each Integer occupies 16 bytes plus 4 bytes for an Integer reference from a map. Each 20 character long String occupies 36 + 20*2 = 76 bytes (see String description above), which are aligned to 80 bytes. Plus 4 bytes for a reference. The total memory consumption will be roughly (16 + 4 + 80 + 4) * 1M = 104M.
+
+The better approach will be replacing String with a byte[] in UTF-8 encoding as described in String packing part 1: converting characters to bytes article. Our map will be Map<Integer, byte[]>. Assume that all string characters belong to ASCII set (0-127), which is true in most of English-speaking countries. A byte[20] occupies 12 (header) + 20*1 = 32 bytes, which conveniently fit into 8 bytes alignment. The whole map will now occupy (16 + 4 + 32 + 4) * 1M = 56M, which is 2 times less than the previous example.
+
+Now let’s use Trove TIntObjectMap<byte[]>. It stores keys as normal int[] compared to wrapper types in JDK collections. Each key will now occupy exactly 4 bytes. The total memory consumption will go down to (4 + 32 + 4) * 1M = 40M.
+
+The final structure will be more complicated. All String values will be stored in the single byte[] one after another with (byte)0 as a separator (we still assume we have a text-based ASCII strings). The whole byte[] will occupy (20 + 1) * 1M = 21M. Our map will store an offset of the string in the large byte[] instead of the string itself. We will use Trove TIntIntMap for this purpose. It will consume (4 + 4) * 1M = 8M. The total memory consumption in this example will be 8M + 21M = 29M. By the way, this is the first example relying on the immutability of this dataset.
+
+Can we achieve the better result? Yes, we can, but at a cost of CPU consumption. The obvious ‘optimization’ is to sort the whole dataset by keys before storing values into a large byte[]. Now we may store the keys in the int[] and use a binary search to look for a key. If a key is found, its index multiplied by 21 (remember, all strings have the same length) will give us the offset of a value in the byte[]. This structure occupies ‘only’ 21M + 4M (for int[]) = 25M at a price of O(log N) lookups compared to O(1) lookups in case of a hash map.
+
+Is this the best we can do? No! We have forgotten that all values are 20 characters long, so we don’t actually need the separators in the byte[]. It means that we can store our ‘map’ using 24M memory if we agree on O( log N ) lookups. No overhead at all compared to theoretical data size and nearly 4.5 times less than required by the original solution ( Map<Integer, String> )! Who told you that Java programs are memory hungry?
+
+In second part of this article we will look at a few commonly used Java types memory consumption.
+
+Summary
+
+Prefer primitive types to their Object wrappers. The main cause of wrapper types usage are JDK collections, so consider using one of primitive type collection frameworks like Trove.
+Try to minimize number of Objects you have. For example, prefer array-based structures like ArrayList/ArrayDeque to pointer based structures like LinkedList.
+Recommended reading
+
+If you want to find out more about the clever data compression algorithms, it worth to read “Programming Pearls” (second edition) by Jon Bentley. This is a wonderful collection of rather unexpected algorithms. For example, in column 13.8 author has described how Doug McIlroy managed to fit a 75,000 word spellchecker just in 64 kilobytes of RAM. That spellchecker kept all required information in that tiny amount of memory and did not use disks! It may also be noticed that “Programming Pearls” is one of recommended preparation books for Google SRE interviews.
+
+Enum, EnumMap, EnumSet
+
+Enums were added to Java 1.5. Technically speaking, each enum is an Object and has all memory consumption properties of objects described in the previous article. Luckily, they have several useful properties:
+
+All enum objects are singletons. This is guaranteed by Java language – you can create an instance of enum only by its definition. This means that you pay for enum object once and then you only spend 4 bytes per its reference (in this article I will assume that object references occupy 4 bytes). But what is the benefit of enums if they consume as much memory as int variables and 4 times more than byte variables, besides type safety and better support in IDE?
+
+The answer is the ordinal() method implemented by every enum. It is an increasing number starting from 0 and ending at the number of values in the given enum minus 1. Such enum property allows us to use arrays for enum to any other object mapping: a value related to the first enum value will be stored in array[0], second enum will be mapped to array[1] and so on according to Enum.ordinal() method result. By the way, it was a short description of JDK EnumMap class implementation.
+
+If you need to implement a map from Object into enum, you won’t have a tailored JDK implementation at hand. Of course, you can use any JDK Object to Object map, but it wouldn’t be that efficient. The easy way here is to use Trove TObjectByteMap (or TObjectIntMap in rare cases when you have more than 128 values in your enum) and map from Object key into Enum.ordinal() value. You will need a decoding method for getters in order to convert byte into an enum. This method will require 1 byte per entry, which is the best we can do without paying CPU algorithmic penalty (of course, we can use less than 1 byte per enum, if there are less than 128, 64, 32, etc elements in the enum, but it may make your code more complicated for a very little memory gain).
+
+With all this knowledge at hand, you may now realize that EnumSet is implemented similarly to BitSet. There are 2 EnumSet implementations in JDK: RegularEnumSet and JumboEnumSet. The former is used for enums having less than 65 values (it covers 99,9999% of real-world enums), the latter is used for larger enumerations.
+
+RegularEnumSet utilizes the knowledge of the fact that there are less or equal to 64 values in the enum. It allows RegularEnumSet to use a single long to store all “enum present in the set” flags, rather than using long[] (utilized by JumboEnumSet or BitSet). Using a single long instead of long[1] allows to save 4 bytes on long[] reference and 16 bytes on long value (long occupies 8 bytes, long[1] needs 12 bytes for header, 8 bytes for a single long and 4 bytes for alignment).
+
+
+BitSet
+
+As you have noticed from a previous section, a BitSet is built on top of the long[]. The minor disadvantage of a BitSet is that its minimal allowed value is fixed to zero. Thus, if you need a BitSet starting at some offset, you will have to manually subtract your offset from all your values in BitSet methods. Besides that, a BitSet is limited to int values. It also means a need of some sort of envelope for storing real long values in it. The LongBitSet class described in my Bit sets article may give you some useful hints.
+
+Dense set of integers as a BitSet
+
+Details of EnumSet implementation may give you a hint on efficient storage of a dense set of integer values: find out the minimal allowed value in your set (call it minVal) and then use a BitSet for integer values storage: call BitSet.set( value - minVal ) to store your value and BitSet.get( value - minVal ) to check if a value is present in the set. The dense set is a set with more than 1 value per 64 entries.
+
+ArrayList
+
+ArrayList is one of the most efficient storage structures in JDK: it has an Object[] for storage plus an int field for tracking the list size (which is different from the array/list capacity = array.length). As long as you keep the actual objects in the ArrayList, it offers you near-optimal storage. All you need to remember about ArrayList is that it is better not to allocate a large ArrayList in advance if you are not sure that its capacity will be fully utilized. This is especially important for collections of such arrays (or collections of objects having array fields).
+
+Another important property of ArrayList to remember is that there is only one ArrayList method which shrinks its capacity – ArrayList.trimToSize. clear/remove* methods decrease ArrayList size instead of capacity. So, if you use an ArrayList as a buffer of some sort and you expect some high peaks in your data, but rather low average buffer size, then it may make sense for you to trim your ArrayList “manually” after that.
+
+If you have a list of numeric wrappers, you’d better use Trove T[Type]ArrayList, which allows you to store (and most important – keep) primitive values in those collections.
+
+LinkedList
+
+LinkedList is the only JDK collection which implements the two following interfaces: List and Deque, which makes it useful for iteration operations on queue/dequeue/stack structures.
+
+Due to being a deque, each LinkedList node contains references to the previous and next elements as well as a reference to the data value. Such node occupies 24 bytes (12 bytes header + 3*4 bytes for references), which is 6 times more than ArrayList in terms of per-node overhead. This structure is also CPU cache-unfriendly due to its spatial non-locality.
+
+ArrayDeque
+
+If all you need is a FIFO/LIFO buffer and you don’t need to access anything except its head or tail, you’d better prefer ArrayDeque to LinkedList.
+
+ArrayDeque is based on an Object[], which length is a power of 2. Besides the array, there are int head and tail pointers – they allow the array to wrap around its edges if required. Because of ArrayDeque internal memory management, its storage array length is always equal to the size of ArrayDeque rounded to the next power of 2. It means that you spend less than 8 bytes per value in the worst case and 4 bytes per value in the best case.
+
+Summary
+
+The following table summarizes the storage occupied per stored value assuming that a reference occupies 4 bytes. Note that you must spend 4 byte per Object reference in any case, so subtract 4 bytes from the values in the following table to find out the storage overhead.
+
+EnumSet, BitSet	1 bit per value
+EnumMap	4 bytes (for value, nothing for key)
+ArrayList	4 bytes (but may be more if ArrayList capacity is seriously more than its size)
+LinkedList	24 bytes (fixed)
+ArrayDeque	4 to 8 bytes, 6 bytes on average
+See also
+
+HashMap, THashMap
+
+HashMap is the most popular map in JDK. Provided that it contains objects with a quality hashCode method and it has not too high load factor, it will generally give you O(1) performance of get and put methods (as well as similar methods like contains).
+
+You can find a proper hash map description in one of popular textbooks (“Algorithms (4th Edition)” or “Introduction to Algorithms”) or in Wikipedia. Here we will only discuss JDK HashMap implementation.
+
+HashMap is built on top of the array of Map.Entry objects. The implementation ensures that this array length is always equal to at least max( size, capacity ) / load_factor. Default load factor for HashMap is 0.75 and default capacity is 16. Load factor specifies which part of an array could be used for storage and is a value between 0 and 1. The higher is the load factor, the less space is being wasted, but HashMap starts to work slower due to increased rate of collisions. The smaller if the load factor, the more memory is wasted, but the performance of a HashMap is increasing due to smaller possibility of collisions.
+
+So, as you have seen, the default (new HashMap<>()) size of array of entries is 16 / 0.75 = 21.33 ~ 22.
+
+What is a HashMap.Entry? It contains a key, a value, int hash of a key and a pointer to the next entry (remember that entries array could be sparse). It means that an entry occupies 32 bytes (12 bytes header + 16 bytes data + 4 bytes padding). So, a HashMap with size = S has to spend 32 * S bytes for entries storage. Besides, it will use 4 * C bytes for entries array, where C is the map capacity.
+
+As you can see, if you will make the map capacity small enough (less than 12.5%), its entry array size will start dominating over the entries.
+
+
+A HashMap instance will occupy 32 * SIZE + 4 * CAPACITY bytes, while the theoretical map size limit could be equal to 8 * SIZE bytes (2 arrays of keys and values with no space wasted). Of course, such a “map” will require O(N) lookup time in general case. Though, in special cases, for example for EnumMap it could be as low as 4 * CAPACITY.
+
+Can we improve the hash map memory consumption without sacrificing O(1) lookup/add times? Surely, we can. Trove THashMap is a replacement implementation for HashMap. Internally THashMap contains 2 arrays – one for keys, another for values. It means that THashMap needs 8 * CAPACITY bytes for storage. Its default load factor is 0.5, but you can increase it if necessary.
+
+Let’s compare the memory usage of HashMap and THashMap with default load factors and size = 100. HashMap capacity will be 134 (100/0.75) and THashMap capacity will be 200 (100/0.5). The total memory consumption of a HashMap will be 32 * 100 + 4 * 134 = 3200 + 536 = 3736 bytes (not including the memory occupied by keys or values!). The memory consumption of THashMap will be 8 * 200 = 1600 bytes. Furthermore, if we will set THashMap load factor to 0.75 (thus making it equal to HashMap load factor), THashMap memory consumption will go down to 8 * 134 = 1072 bytes.
+
+As you can see, it worth to replace JDK HashMap with Trove THashMap if you want to save some memory.
+
+HashSet, THashSet
+
+JDK HashSet is built on top of a HashMap<T, Object>, where value is a singleton ‘present’ object. It means that the memory consumption of a HashSet is identical to HashMap: in order to store SIZE values, you need 32 * SIZE + 4 * CAPACITY bytes (plus size of your values). It is definitely not a memory-friendly collection.
+
+Trove THashSet could be the easiest replacement collection for a HashSet – it implements Set<E> and Iterable<E>, which means you should just update a single letter in the initialization of your set.
+
+THashSet uses a single object array for its values, so it uses 4 * CAPACITY bytes for storage. As you can see, compared to JDK HashSet, you will save 32 * SIZE bytes in case of the identical load factor, which is a huge improvement.
+
+LinkedHashMap
+
+LinkedHashMap is the most memory-hungry collection in JDK. It extends HashMap by using LinkedHashMap.Entry as an entry in the internal array of entries. LinkedHashMap.Entry extends HashMap.Entry by adding ‘before’ and ‘after’ pointers, thus implementing a linked deque. For us it means that LinkedHashMap.Entry consumes 40 bytes (8 bytes more than HashMap.Entry).
+
+It means that LinkedHashMap consumes 40 * SIZE + 4 * CAPACITY bytes. Unfortunately, Trove does not offer a direct replacement for this collection, but I would advise you to use a linked list if you want to store a small number of elements.
+
+LinkedHashSet, TLinkedHashSet
+
+JDK LinkedHashSet extends HashSet and adds nothing to it. It means the identical memory consumption of 32 * SIZE + 4 * CAPACITY bytes (plus size of your values).
+
+Trove TLinkedHashSet could be used as a replacement. It adds TIntList for storing the order of entries to THashSet, which means that it occupies 8 * CAPACITY bytes.
+
+TreeMap
+
+TreeMap is a red-black tree. This means that a tree contains exactly map.size() nodes. Each tree node contains: key, value, pointers to the left and right children, pointer to a parent and a boolean ‘colour’ flag. It means that a node occupies 12 bytes for header, 20 bytes for 5 object fields and 1 byte for the flag, so the total consumption is 12 + 20 + 1 = 40 (due to 8 byte alignment). The last flag seems to be odd in this design, because it causes each node to consume 7 bytes more (due to alignment). This situation could be solved by having 2 types of nodes – one class for red nodes and another for black ones.
+
+So, the total memory consumption of a TreeMap is 40 * SIZE bytes, which is approximately the same as the memory consumption of a HashMap. In terms of CPU consumption, a TreeMap is worse – all of its methods have O(logN) complexity compared to O(1) of HashMap (provided that the load factor is low enough).
+
+The advantage of a TreeMap is that it implements a NavigableMap interface, which allows you to make cheap requests for previous/next entries by the natural ordering or provided Comparator as well as to make any range selections.
+
+TreeSet
+
+JDK TreeSet is backed by a TreeMap, so its memory consumption is identical: 40 * SIZE bytes.
+
+PriorityQueue
+
+The last collection to discuss is a PriorityQueue. This collection is used in scenarios when from time to time you need to extract/get the smallest (or the largest, depending on your settings) element in the collection as well as to add the new elements to the collection. Extraction and insertion are mixed without any particular order.
+
+PriorityQueue is based on the binary heap, which is essentially an array, where children of entry with index N are located at 2*N+1 and 2*N+2. The size of this array is increased twofold on each resize, so for sufficiently large collections we use between 50 and 100% of entries in the array. There are no wrappers for collection elements, which means that PriorityQueue consumption is between 4 * SIZE and 8 * SIZE bytes (identical to ArrayList despite their different purposes). We can also specify this size as 4 * CAPACITY bytes.
+
+Summary
+
+Always try to replace HashMap with Trove THashMap, HashSet with a THashSet and finally, LinkedHashSet with a Trove TLinkedHashSet. Such replacement requires adding a single letter to your code (letter ‘T’) and no other code changes except the import statement. Such replacement will give you significant memory savings – see table below.
+The following table summarizes the storage occupied per stored value assuming that a reference occupies 4 bytes. Note that you must spend 4 byte per Object reference in any case, so subtract 4 bytes from the values in the following table to find out the storage overhead (subtract 8 bytes for maps, because there is a key as well as a value).
+JDK collection	Size	Possible Trove substitution	Size
+HashMap	32 * SIZE + 4 * CAPACITY bytes	THashMap	8 * CAPACITY bytes
+HashSet	32 * SIZE + 4 * CAPACITY bytes	THashSet	4 * CAPACITY bytes
+LinkedHashMap	40 * SIZE + 4 * CAPACITY bytes	None	 
+LinkedHashSet	32 * SIZE + 4 * CAPACITY bytes	TLinkedHashSet	8 * CAPACITY bytes
+TreeMap, TreeSet	40 * SIZE bytes	None	 
+PriorityQueue	4 * CAPACITY bytes	None
+
+
+Static inner classes
+
+Java lacks a normal library tuple support like the one Scala has. This forces Java developers to create a lot of usually inner classes, whose only purpose is to compose a few elements as a single entity for a collection. One really popular example of such inner class is Pair, which is often implemented as a generic class.
+
+Inner non-static classes have an important property – they store a reference to their parent class. Such reference allows them to seamlessly call parent methods and access parent fields. Such a reference is often not needed for the simple tuple-like classes. You can get rid of it by marking your class as static. This will save you 4 bytes and increase its chances to occupy 8 bytes less (see An overview of memory saving techniques in Java for more details).
+
+You should generally mark all your inner classes as static until there is a need to remove such qualifier.
+
+
+Tiny collections
+
+JDK collections incur a noticeable memory overhead in case when collection is small. You can avoid it by using specialized flavors of collections provided by java.util.Collections class. There are two sets of specialized methods:
+
+emptyList/emptyMap/emptySet for empty collections
+singletonList/singletonMap/singleton for collections containing a single element/pair
+These methods return immutable collections, so you will need some extra logic if you want to use them for mutable collections, but they make a perfect sense if you have a collection of immutable collections: empty collections are singletons, so they occupy no extra storage (just 4 bytes for a reference pointing to them), singleton collections occupy just either 16 bytes (list/set) or 24 bytes (map).
+
+These ideas were further extended in Scala immutable collections package, which defines 5 special immutable map/set implementations with sizes from 0 to 4.
+
+Boolean flags
+
+If you have a list/array of objects having some boolean flags, check if you can extract these flags into one or more independent BitSet objects. Use original list/array index for accessing these flags in the BitSet. This approach requires that no insertions/removals are being made in the middle of array/list, because BitSet does not efficiently support shifting.
+
+Such improvement may save you rather small amount of memory (1 byte is converted into 1 bit), but it will make a CPU difference if you have some loops on this array checking one of these boolean flags. For example, you have an Order with a boolean requiresProcessing flag. Your code will call some process method on orders having this flag set.
+
+A normal object-oriented loop will check a boolean field on every order. Accessing an order will most likely incur a CPU cache miss (we have a lot of orders and we must follow a pointer in order to get to the order fields). In most situations it means a CPU cache miss on every order. Now suppose you are iterating a separate BitSet with requiresProcessing flags and then jump to the required order using a flag index.
+
+In this situation all your flags are located sequentially, so sequential memory access pattern will be used by CPU cache fetching logic. Besides that, you will have 512 flags in one cache line (64 bytes * 8 bit). It means the cheapest possible iteration of flags plus most likely no overhead on fetching the next 512 flags. Your orders are located in the array, so you have 16 order references in one cache line. Besides that, there is same sequential access pattern (though, with some jumps). Chances are good that obtaining an order reference will also be done from CPU cache. And only after that, when you have to process an order, its data should be obtained from RAM into cache, causing a cache miss.
+
+A simple optimization made it possible to pay for data access only on orders which actually have to be processed instead of every order. You should remember that difference in CPU cache access time and RAM access time is about an order of magnitude.
+
+Remember that you can also use a BitSet for storing a dense set of integer numbers regardless of the starting sequence number in your set (see Bit sets for details).
+
+String pooling
+
+Read a separate article dedicated to String.intern() method implementation in Java 6, 7 and 8, which will describe you the right methods of implementing a string pool in all these versions of Java.
+
+Summary
+
+Make all your inner classes static by default. Remove static qualifier only when you have to.
+If you have a collection of generally small collections, try to use java.util.Collections.empty*/singleton* methods for memory-efficient storage of tiny collections.
+Prefer a BitSet to arrays/lists of boolean or dense sets of any integer types: bit sets are both memory and CPU cache friendly.

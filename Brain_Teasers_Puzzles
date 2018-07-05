@@ -1,0 +1,31 @@
+You are given a 3-litre jug and a 5-litre jug. How do you use them to get 4 litres of liquid?
+
+Fill the 5-litre jug completely.  Pour the contents of the 5-litre jug into the 3-litre jug, leaving 2 litres of liquid in the 5-litre jug.  Next, dump out the contents of the 3-litre jug and pour the contents of the 5-litre jug into the 3-litre jug.  At this point, there are 2 litres in the 3-litre jug.  Fill up the 5-litre jug and then pour the contents of the 5-litre jug into the 3-litre jug until the 3-litre jug is full.  You will have poured 1 litre, leaving 4 litre in the 5-litre jug.
+
+ 
+•You are given 12 balls and a scale. Of the 12 balls, 11 are identical and 1 weighs slightly more. How do you find the heavier ball using the scale only three times?
+
+First, weigh 5 balls against 5 balls (1st Use of Scale).  If the scale is equal, then discard those 10 balls and weigh the remaining 2 balls against each other (Second Use of Scale).  The heavier ball is the one you are looking for.
+
+If on the first weighing (5 vs 5), one group is heavier, then of the heavier group weigh 2 against 2 (2nd Use of Scale).  If they are equal, then the 5th ball from the heavier group (the one not weighed) is the one you are looking for.  If one of the groups of 2 balls is heaver, then take the heaver group of 2 balls and weigh them against each other (Third Use of Scale).  The heavier ball is the one you are looking for.
+
+There are also many other ways (ie, 4 vs 4, 4 off; leads to 2 vs 2 and that leads to 1 vs 1.  OR 6 vs 6 to 2 vs 2 and 2 off, leads to 1 vs 1) but the above is most efficient.
+
+ 
+•You have two light bulbs at a 100-story building. You want to find the floor at which the bulbs will break when dropped. Find the floor using the least number of drops.
+
+There are lots of ways to approach this algorithm. The important things is to make sure they understand the worst case scenarios and such. Examples include:
+
+Start moving up in increments of 10 floors and dropping the bulb until it breaks (ie: drop from floor 10, if it doesn't break, drop from floor 20, etc.). Once the bulb breaks, move down to the floor before it broke on and start moving up floors in increments of one until the second bulb breaks. This results in a worst case scenario of 19 drops.
+
+19 drops is not the best worst case scenario... imagine trying floor 16, if it breaks, you try 1 - 15 and that’s 16 tries. If it doesn't break, then try floor 31 and if it breaks, then try 17 - 30 (so 16 tries, including the try on floor 16). And on and on (45, 58, 70, 81, 91, 100). If you reach 91, you'll have tried 7 floors so far and if it doesn't break, then there's 9 more tries to get to 100 (thus 16 in the worst case).
+
+ 
+•If you had 5,623 participants in a tournament, how many games would need to be played to determine the winner?
+
+We’re not looking for a right answer here as there can be many. We’re looking for their approach to gauging requirements and solving the problem. They should be asking about the type of tournament: is it single elimination or round robin? Are the participants teams or individuals?
+
+ 
+•There are 20 different socks of ten types in a drawer in a completely dark room. What is the minimum number of socks you should grab to ensure you have a matching pair?
+
+The key to answering this is picking up on the word ‘ensure’. You don’t know the ratio of the two colours, so the only way to 'ensure you have a matching pair' is to pick up 11 of the 20.

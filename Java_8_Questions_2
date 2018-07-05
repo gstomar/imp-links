@@ -1,0 +1,135 @@
+Predicate	Interface	java.util.function	Represents a predicate (boolean-valued function) of one argument.
+PrimitiveIterator	Interface	java.util	A base type for primitive specializations of Iterator.
+Spliterator	Interface	java.util	An object for traversing and partitioning elements of a source.
+SplittableRandom	Class	java.util	A generator of uniform pseudorandom values applicable for use in (among other contexts) isolated parallel computations that may 
+IntToLongFunction	Interface		1.8	Link
+Long	Class	java.lang.Number	1.0	Link
+LongAccumulator	Class	java.lang.Number	1.8	Link
+LongAdder	Class	java.lang.Number	1.8	Link
+LongBinaryOperator	Interface		1.8	Link
+LongConsumer	Interface		1.8	Link
+LongFunction	Interface		1.8	Link
+LongPredicate	Interface		1.8	Link
+LongStream	Interface		1.8	Link
+LongStream.Builder	Interface		1.8	Link
+LongSummaryStatistics	Class	java.lang.Object	1.8	Link
+LongSupplier	Interface		1.8	Link
+LongToDoubleFunction	Interface		1.8	Link
+LongToIntFunction	Interface		1.8	Link
+LongUnaryOperator	Interface		1.8	Link
+
+List of Set Classes and Interfaces
+
+Name	Type	Package	Detail
+
+AbstractSet	Abstract Class	java.util	Detail
+BitSet	Class	java.util	Detail
+ConcurrentSkipListSet	Class	util.concurrent	Detail
+CopyOnWriteArraySet	Class	util.concurrent	Detail
+EnumSet	Class	java.util	Detail
+HashSet	Class	java.util	Detail
+LinkedHashSet	Class	java.util	Detail
+NavigableSet	Interface	java.util	Detail
+Set	Interface	java.util	Detail
+SortedSet	Interface	java.util	Detail
+TreeSet	Class	java.util	Detail
+
+Java - Threads - Classes and Interfaces			
+			
+Name	Type	Parent	Since
+			
+ForkJoinPool.ForkJoinWorkerThreadFactory	Interface		
+ForkJoinWorkerThread	Class	java.lang.Thread	1.7
+IllegalThreadStateException	Class	IllegalArgumentException	1
+InheritableThreadLocal	Class	java.lang.ThreadLocal	1.2
+ScheduledThreadPoolExecutor	Class	ThreadPoolExecutor	1.5
+Thread	Class	java.lang.Object	1
+Thread.State	Class	java.lang.Enum	1.5
+Thread.UncaughtExceptionHandler	Interface		1.5
+ThreadDeath	Class	java.lang.Error	1
+ThreadFactory	Interface		1.5
+ThreadGroup	Class	java.lang.Object	1
+ThreadInfo	Class	java.lang.Object	1.5
+ThreadLocal	Class	java.lang.Object	1.2
+ThreadLocalRandom	Class	java.util.Random	1.7
+ThreadMXBean	Interface		1.5
+ThreadPoolExecutor	Class	AbstractExecutorService	1.5
+ThreadPoolExecutor.AbortPolicy	Class	java.lang.Object	
+ThreadPoolExecutor.CallerRunsPolicy	Class	java.lang.Object	
+ThreadPoolExecutor.DiscardOldestPolicy	Class	java.lang.Object	
+ThreadPoolExecutor.DiscardPolicy	Class	java.lang.Object	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

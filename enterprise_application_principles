@@ -1,0 +1,18 @@
+DRY (don’t repeat yourself): writing code more than once is not a good fit for a lazy developer ;)It also makes your software more difficult to maintain because it becomes harder to make your business logic consistent
+
+Readability: following clean-code best practices, 80% of writing code is reading the code that already exists. Having complicated lambda expressions is still a bit hard to read compared to a simple one-line statement.
+
+Testability: your business logic needs to be well-tested. It is adviced to unit-test your complex predicates. And that is just much easier to do when you separate your business predicate from your operational code.
+-----------------------------------------------------------------
+
+The four Reactive principles
+Reactive applications are built on four guiding principles.
+
+The core building blocks of Reactive applications.
+Responsive : A responsive application is the goal.
+Resilient : 
+Scalable :
+A responsive application is both scalable and resilient. Responsiveness is impossible to achieve without both scalability and resilience.
+Message Driven :
+A message-driven architecture is the foundation of scalable, resilient, and ultimately responsive systems.
+

@@ -1,0 +1,14 @@
+ Tips to reduce GC Time
+ Increase the G1 region size so that allocations would not exceed 50% limit. By default region size is calculated during startup based on the heap size. It can be overriden by specifying '-XX:G1HeapRegionSize' property. Region size must be between 1 and 32 megabytes and has to be a power of two. Note: Increasing region size is sensitive change as it will reduce the number of regions. So before increasing new region size, do thorough testing.
+ 
+ With GC Logs you can diagnose only 5 flavours of them(Java heap space, GC overhead limit exceeded, Requested array size exceeds VM limit, Permgen space, Metaspace). So in other words, your application could be still suffering from memory leaks, but need other tools to diagnose them, not just GC Logs.)
+ 
+ Command Line Flags 
+-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/u01/app/wildfly8/apps/ngs-service-alert-seda-processor/log -XX:InitialHeapSize=8589934592 -XX:MaxHeapSize=8589934592 -XX:MaxMetaspaceSize=419430400 -XX:NativeMemoryTracking=detail -XX:+PrintGC -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseG1GC 
+
+Best practises/tools
+
+Use fastThread.io tool to analyze thread dumps, core dumps and hs_err_pid files
+Do proactive Garbage Collection analysis on all your JVMs (not just one or two) using the GC log analysis API 
+Always rotate the GC log files to prevent critical garbage collection data loss
+Use 'Enterprise' edition for 10x fast, unlimited, secure usage

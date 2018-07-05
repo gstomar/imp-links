@@ -1,0 +1,115 @@
+Java collections overview
+by Mikhail Vorontsov
+
+This article will give you an overview of all standard Java collections. We will categorize their distinguishable properties and main use cases. Besides that, we will list all correct ways of transforming your data between various collection types.
+
+Arrays
+
+Array is the only collection type built in Java. It is useful when you know an upper bound on the number of processed elements in advance. java.util.Arrays contains a lot of useful methods for array processing:
+
+Arrays.asList – conversion from array to List, which could be passed to other standard collection constructors.
+Arrays.binarySearch – fast lookup in a sorted array or its subsection.
+Arrays.copyOf – use this method if you need to expand your array while keeping its contents.
+Arrays.copyOfRange – if you need to make a copy of the whole array or its subsection.
+Arrays.deepEquals, Arrays.deepHashCode – versions of Arrays.equals/hashCode supporting nested sub-arrays.
+Arrays.equals – if you need to compare two arrays for equality, use this method instead of array equals method ( array.equals is not overridden in any array, so it only compares references to arrays, rather than their contents ). This method may be combined with Java 5 boxing and varargs in order to write a simple implementation of your class equals method – just pass all your class fields to Arrays.equals after comparing object types.
+Arrays.fill – populate the whole array or its subsection with a given value.
+Arrays.hashCode – useful method for calculating a hashcode of array contents ( array own hashcode method can not be used for this purpose ). This method may be combined with Java 5 boxing and varargs in order to write a simple implementation of your class hashcode method – just pass all your class fields to Arrays.hashcode.
+Arrays.sort – sort the full array or its subsection using natural ordering. There is also a pair of Arrays.sort methods for sorting an Object[] using a provided Comparator.
+Arrays.toString – fine-print the array contents.
+If you need to copy one part of array (or the whole array) into another already existing array, you need to use System.arraycopy, which copies a given number of elements from a given position in the source array to a given position in the destination array. Generally, this is the fastest way to copy array contents in Java (but in some cases you may need to check if ByteBuffer bulk copy works faster ).
+
+Finally, we need to mention that any Collection could be copied into an array using T[] Collection.toArray( T[] a ) method. The usual pattern of this method call:
+
+1
+return coll.toArray( new T[ coll.size() ] );
+Such method call allocates a sufficient array for storing the whole collection, so that toArray doesn’t have to allocate sufficiently large array to return.
+
+Single-threaded collections
+
+This part of the article describes non-thread-safe collections. All these collections are stored in the java.util package. Some of these collections were present in Java since Java 1.0 (and are now deprecated), most of them were already present in Java 1.4. Enum collections were added in Java 1.5 with the support of generics in all collection classes. PriorityQueue was also added in Java 1.5. The latest addition to the non-thread-safe collections framework is ArrayDeque, which was added in Java 1.6.
+
+Lists
+
+ArrayList – the most useful List implementation. Backed by an array and an int – position of the first not used element in the array. Like all Lists, expands itself when necessary. Has constant element access time. Cheap updates at the tail (constant complexity), expensive at the head (linear complexity) due to ArrayList invariant – all elements start from index = 0 in the underlying array, which means that everything to the right from the update position must be moved to the right for insertions and to the left for removals. CPU-cache friendly collection due to being backed by an array (unfortunately, not too friendly, because contains Objects, which are just pointers to the actual objects).
+LinkedList – Deque implementation – each Node consists of a value, prev and next pointers. It means that element access/updates have linear complexity (due to an optimization, these methods do not traverse more than a half of the list, so the most expensive elements are located in the middle of the list). You need to use ListIterators if you want to try to write fast LinkedList code. If you want a Queue/Deque implementation (you need to access only first and last elements) – consider using ArrayDeque instead.
+Vector – a prehistoric version of ArrayList with all synchronized methods. Use ArrayList instead.
+
+Queues/deques
+
+ArrayDeque – Deque implementation based on the array (circular buffer) with head/tail pointers. Unlike LinkedList, this class does not implement List interface, which means that you can not access anything except the first and the last elements. This class is generally preferable to LinkedList for queues/deques due to a limited amount of garbage it generates (old array will be discarded on the extensions).
+Stack – a LIFO queue. Do not use it in the production code. Use any Deque implementation instead (ArrayDeque is preferable).
+PriorityQueue – a queue based on the priority heap. Uses either natural ordering or a provided Comparator. Its main property – poll/peek/remove/element methods always return the smallest remaining element in the queue. Despite that, this queue implements Iterable which does not iterate this queue in a sorted order (or any other particular order). This queue is generally preferable to other sorted collections, like TreeSet if all you need is a smallest element in the queue.
+Maps
+
+HashMap – a most popular map implementation. It just maps keys to values and does nothing else. In case of a high quality hashcode method, get/put methods have a constant complexity.
+EnumMap – a map with enum keys. Generally works faster than a HashMap due to a known maximal number of keys and built-in enum to int mapping (it is a fixed size array of values).
+Hashtable – prehistoric synchronized version of a HashMap. Use HashMap in the new production code.
+IdentityHashMap – a very special version of a Map, violating the Map general contract: it compares references using == instead of calling Object.equals. This property makes IdentityHashMap useful for various graph traversal algorithms – you may easily store already processed nodes in the IdentityHashMap along with some node-related data.
+LinkedHashMap – a combination of a HashMap and a LinkedList – insertion order of all elements is stored inside a LinkedList. That’s why LinkedHashMap entries, keys and values are always iterated in the insertion order. This is the most expensive JDK collection in terms of memory consumption per element.
+TreeMap – a red-black tree based sorted navigable Map. It sorts all entries based on the natural order or a given Comparator of keys. This map requires that implementation of equals and Comparable/Comparator.compareTo should be consistent. This class implements a NavigableMap interface: it allows getting a map of all entries less than/more than given key; getting a prev/next entry (based on the key ordering); getting a map with a given range of keys (which roughly corresponds to SQL BETWEEN operator) and many variations of these methods.
+WeakHashMap – this map is generally used in data cache implementations. It keeps all its keys with WeakReference, which means that these keys may be garbage collected if there are no strong references to the key objects. Values, on the other hand, are stored using strong references. Because of this, you should either ensure that there are no references from values to keys, or keep values inside weak references too: m.put(key, new WeakReference(value)).
+Sets
+
+HashSet – a set implementation based on a HashMap with dummy values (same Object is used for every value). Has the same properties as a HashMap. Due to such implementation, consumes more memory than actually required for this data structure.
+EnumSet – a set of enum values. Each enum in Java is mapped into an int: one distinct int for each enum value. This allows to use a BitSet-like structure for this collection, where each bit is mapped to a distinct enum value. There are 2 actual implementations – RegularEnumSet backed up by a single long (and capable to store up to 64 enum values, which covers 99.9% use cases) and JumboEnumSet backed by a long[].
+BitSet – a bit set. You should always keep in mind that you may use a BitSet for representing a dense set of integers (like ids starting from a number known in advance). This class uses a long[] for bit storage.
+LinkedHashSet – like HashSet, this class is implemented on top of a LinkedHashMap. This is the only set which keeps its elements in the insertion order.
+TreeSet – like HashSet, this class is based on a TreeMap instance. This is the only sorted set in the single threaded part of the standard JDK.
+java.util.Collections
+
+Like java.util.Arrays for arrays, java.util.Collections has a lot of useful methods for collection processing.
+
+The first group of methods returns various views of collections:
+
+Collections.checkedCollection / checkedList / checkedMap / checkedSet / checkedSortedMap / checkedSortedSet – return a view of a collection which checks type of added elements at runtime. Any attempt to add an element of incompatible type will throw a ClassCastException. This functionality may be required in order to defend against runtime casts.
+Collections.emptyList / emptyMap / emptySet – useful when you need to return an immutable empty collection and don’t want to allocate any objects.
+Collections.singleton / singletonList / singletonMap – returns an immutable set/list/map with a single entry.
+Collections.synchronizedCollection / synchronizedList / synchronizedMap / synchronizedSet / synchronizedSortedMap / synchronizedSortedSet – returns a view of a collection with all synchronized methods (cheap and inefficient multithreading, still not supporting any compound actions, like put-or-update).
+Collections.unmodifiableCollection / unmodifiableList / unmodifiableMap / unmodifiableSet / unmodifiableSortedMap / unmodifiableSortedSet – return an unmodifiable view of a collection. Useful when you need to implement an immutable object containing any collections.
+The second group contains various methods which were not added to collections for some reason:
+
+Collections.addAll – call it if you need to add a number of elements or just an array contents to a collection.
+Collections.binarySearch – same as Arrays.binarySearch for arrays.
+Collections.disjoint – checks that 2 collections have no elements in common.
+Collections.fill – replaces all elements of a list with a specified value.
+Collections.frequency – how many elements in the given collection are equal to the given object.
+Collections.indexOfSubList / lastIndexOfSubList – these methods look similar to String.indexOf(String) / lastIndexOf(String) – they find the first or last occurrence of the given sublist in the given list.
+Collections.max / min – find the biggest / smallest element in the collection based on the natural ordering or Comparator.
+Collections.replaceAll – replace one element with another in the given list.
+Collections.reverse – reverse the order of elements in the given list. If you call this method right after sorting your list, you’d better use Collections.reverseOrder comparator while sorting your list.
+Collections.rotate – rotate elements of the list by the given distance.
+Collections.shuffle – shuffle the list. Note that you can provide you own random generator to this method – it could be either java.util.Random / java.util.ThreadLocalRandom or java.security.SecureRandom.
+Collections.sort – sort the list according to the natural ordering or to the given Comparator.
+Collections.swap – swap 2 elements of the list at given positions (a lot of developers write it by hand).
+Concurrent collections
+
+This part of the article describes thread-safe collections from java.util.concurrent package. The main property of these collections is a guarantee of atomic execution of their methods. You should not forget that compound actions, like “add-or-update” or “check-then-update”, involving more than one method call, should still be synchronized, because information queried from the collection on the first step of compound action could become invalid before you will reach the second step.
+
+Most of concurrent collections were introduced in Java 1.5. ConcurrentSkipListMap / ConcurrentSkipListSet and LinkedBlockingDeque were added in Java 1.6. The latest additions to Java 1.7 are ConcurrentLinkedDeque and LinkedTransferQueue.
+
+Lists
+
+CopyOnWriteArrayList – list implementation, making a new copy of underlying array on each update. This is an expensive operation, so this class could be used when traversals seriously outnumbering updates. The usual use case for this collection is listeners/observers collection.
+Queues/deques
+
+ArrayBlockingQueue – a bounded blocking queue backed by an array. Can not be resized, so when you will try to add an element to a full queue, a method call will block until another thread will extract an element from the queue.
+ConcurrentLinkedDeque / ConcurrentLinkedQueue – an unbounded deque/queue based on the linked list. Adding elements to this queue does not block, but this has an unfortunate requirement that a consumer for this collection must work at least as fast as a producer, otherwise you will run out of memory. Heavily relies on CAS (compare-and-set) operations.
+DelayQueue – an unbounded blocking queue of Delayed elements. An element could be taken from a queue only after its delay has expired. The head of the queue is the element with the smallest remaining delay (including negative values – delay has already expired). This queue could be useful, for example, when you want to implement a queue of delayed tasks (do not implement such queue manually – use ScheduledThreadPoolExecutor instead).
+LinkedBlockingDeque / LinkedBlockingQueue – optionally bounded (could be created with specified maximal capacity or without it) queue/deque based on the linked list. It uses ReentrantLock-s for empty/full conditions.
+LinkedTransferQueue – an unbounded queue based on the linked list. Besides ordinary queue operations, it has a group of transfer methods, which allow a producer to send a message straight to the waiting consumer, thus removing the need to store an element into a queue. This is a lock-free collection based on CAS operations.
+PriorityBlockingQueue – an unbounded blocking queue version of PriorityQueue.
+SynchronousQueue – a blocking queue without any internal capacity. It means that any insert request must wait for corresponding remove request and vice versa. If you don’t need a Queue interface, then the same functionality could be achieved via Exchanger class.
+Maps
+
+ConcurrentHashMap – a hash table with full concurrency for get operations and configurable level of concurrency for put operations. This level is adjusted via concurrencyLevel constructor parameter (default 16), which defines a number of partitions inside this map. Only an updated partition is locked during put operation. Remember that this map is not a thread-safe replacement for HashMap algorithms – any “get-then-put” sequences of method calls on this map (or any other concurrent collection) should be externally synchronized.
+ConcurrentSkipListMap – a ConcurrentNavigableMap implementation based on skip lists. In essence, this collection could serve as a thread-safe replacement for TreeMap.
+Sets
+
+ConcurrentSkipListSet – a concurrent set using a ConcurrentSkipListMap for storage.
+CopyOnWriteArraySet – a concurrent set using a CopyOnWriteArrayList for storage.
+See also
+
+Primitive types collections: Trove library – an overview of Trove library – a library containing collections storing Java primitives (unlike Objects in most of JDK collections).
+Memory consumption of popular Java data types – part 1 – memory consumption of enums, EnumMap / EnumSet / BitSet / ArrayList / LinkedList / ArrayDeque classes.
+Memory consumption of popular Java data types – part 2: memory consumption of HashMap / HashSet, LinkedHashMap / LinkedHashSet, TreeMap / TreeSet and PriorityQueue JDK classes in Java 7 as well as their Trove replacements.

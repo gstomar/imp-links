@@ -1,0 +1,23 @@
+All the streams are AutoClosable and extend the BaseStream interface.
+
+IntStream :  A sequence of primitive int-valued elements supporting sequential and parallel aggregate operations. 
+
+collect() -> Performs a mutable reduction operation on the elements of this stream using a Collector
+
+Collectors : Implementations of {@link Collector} that implement various useful reduction operations, such as accumulating elements into collections, summarizing elements according to various criteria, etc.
+
+The interface Collection has got the default method names stream  which returns a sequential or parallel Stream with this collection as its source.
+
+StreamSupport class provides the Low-level utility methods for creating and manipulating streams.
+
+BinaryOperator :  Represents an operation upon two operands of the same type, producing a result of the same type as the operands.  This is a specialization of BiFunction for the case where the operands and the result are all of the same type.
+(left, right) -> left.toString() + right.toString()
+
+ToIntFunction: Represents a function that produces an int-valued result.  This is the producing primitive specialization for {@link Function}.
+
+Function : Represents a function that accepts one argument and produces a result.
+
+UnaryOperator : Represents an operation on a single operand that produces a result of the same type as its operand.  This is a specialization of {@code Function} for the case where the operand and result are of the same type.
+
+Consumer :  epresents an operation that accepts a single input argument and returns no result. Unlike most other functional interfaces, {@code Consumer} is expected to operate via side-effects.
+

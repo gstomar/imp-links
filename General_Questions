@@ -1,0 +1,546 @@
+Go to start of metadata 
+
+
+
+
+
+Java
+
+General
+1.Tell me some methods from the Object class
+2.What is a Map? HashMap, TreeMap?
+3.Why would you use a HashMap or TreeMap?
+4.Which methods should I override/implement if I want to add a class to a HashMap or TreeMap?
+5.What is an enum?
+6.What are generics?
+7.What are generic type constraints?
+8.What is the difference between long and double?
+9.What are design patterns?a.Tell me the names of some.
+
+
+Garbage Collection
+1.What is garbage collection?
+2.Tell me some garbage collector names?
+3.Tell me the parts of the heap.a.What is stored in each part?
+
+4.Pick a garbage collector and tell me how it works.
+5.What is the weak generational hypothesis?
+6.What can be done to tune GC times?
+
+Concurrency
+1.Why do we use concurrency?
+2.How can we distribute tasks for concurrent execution?
+3.What is the difference between a thread and a process?
+4.Tell me some risks of concurrent programming
+5.What is atomicity?
+6.What is mutual exclusion?
+7.How can we achieve mutual exclusion?
+8.What are differences between using synchronised code and locks?
+9.Tell me an impl of Executor?
+10.What collections can you use to pass tasks between threads?
+11.What is the Disruptor?a.Can you describe how it works?
+
+12.Why is lock-free concurrency fast?
+
+Technology
+
+Servers
+1.What versions of Linux / Unix have you used?
+2.How can you view system performance?
+3.How can you check disk usage?
+
+Middleware / Networking
+1.What is unicast?
+2.What is multicast?
+3.What is TCP?
+4.What is UDP?
+5.Why would use use TCP or UDP?
+6.What is the difference between a hub, switch and router?
+7.What is the difference between a queue and a topic?
+8.Tell me some Java serialisation / deserialisation libs?
+
+Low Latency / Algorithms / New Tech
+1.Tell me about an interesting technical article you've read recently?
+2.Tell me some new Java features in Java7 and Java8
+3.Why is low latency important?
+4.Tell me some JVM options for tuning application performance?
+5.What is biased locking?
+6.What is lock coarsening?
+7.What is profiling?a.What did you profile?
+b.What profilers have you used?
+
+8.What does "kernel bypass" mean?a.Experience?
+
+9.What is a "cut through" switch?a.Experience?
+
+10.What is packet capture?a.How can we capture packets?
+b.How can you analyse them?
+
+11.What is big O notation aka big Omicron?
+12.Tell me a sorting algorithm.a.How does it work?
+b.What is its big O performance for random data and sorted data.
+
+13.What is hyperthreading?a.Is it good or bad?
+
+14.What is NTP?
+15.What is PTP?
+16.What is a colo?
+17.What is a good latency for LDN -> NYK?
+
+E-FX
+
+eTrading
+1.What is an order?
+2.What is a trade?
+3.What is an orderbook?
+4.What are some order types?
+5.What is time in force? examples?
+6.What is market making?
+7.What is a matchine engine?
+8.What are some matching engine algorithims?
+9.Tell me some trading algorithims? a.How do they work? 
+b.Why are they used?
+
+10.What is FIX?a.Tell me some FIX engines
+
+11.What is FAST/FIX?
+12.What is a circuit breaker?
+
+FX
+1.What is spot?
+2.What is a forward?
+3.What is a future?
+4.What is an option?
+5.Tell me some FX trading venues?
+
+
+1) can state some design patterns ? E.g Factory, Decorative, IoC
+
+2) can state the feature of spring? IoC, AOP
+
+3) what is the advantage of IoC? it is loosely couple , easy for testing and component is pluggable
+
+4) does he know what the static keyword in java mean? How does it affect the programming in the multithreading environment?
+
+5) how advance has he used the hibernate framework?
+
+6) does he know about ajax?
+
+7) can state the difference between pemisstic and optimistic locking used in hibernate?
+
+8) Have tried spring integration , spring batch?
+
+GUI
+
+General JavaScript - only award point when question backed up with practical answer or if they blatantly know but can't get the words out. Do not give point if they say "I think it's".. i.e. if they are guessing based on the name etc.
+1.What is a closure? Give an example usage for a closure?
+2.What is a promise? 
+3.What is the API for a promise?
+4.Why use a promise? Examples? If you while(true) within a promise will it block outside of the promise?
+5.Can you cancel a promise? 
+6.How do you wait for all promises to complete?
+7.What is a websocket? Why use one?
+8.Can you guarantee message order if connected to a single server?
+9.What is a higher order function?
+10.What is immutability? Why is is useful? This has to be coherent. No multi-threading answers accepted. No points for saying "because in redux..."
+11.What is difference between == and ===? Which is faster? Why? Only get point if everything answered correctly.
+12.What is a module loader?
+13.Can you give examples of module loaders? (AMD and CommonJS, WebPack, ES6 Modules?)
+14.Give some examples of why module loader would return null when loading a package?
+15.What does bind do? Give an example why you'd use bind? Only give point if they know about the additional parameters to 'this' in bind(context, args).
+16.What is function currying? How would you curry a function? Give point if talk about a function that returns a function or using bind.
+17.What is difference between apply and call? Can you give examples?
+18.What is a lambda/arrow function?
+19.What is the difference between var, let and const?
+20.What are template literals/strings?
+21.What are computed property names? What is the syntax?
+22.What is hoisting? If i declare var=10 in middle of file and console.log(a) at top, what is printed?
+23.What is array destructuring and how/why would you use it?
+24.What is object destructuring and how/why would you use it?
+25.What are iterators and generators?
+26.What is a map? Why not use normal javascript object as a map? Only give point if they realise you can have object keys in Map.
+27.What is a set?
+28.What is a WeakMap/WeakSet - why use them?
+
+29.What is a worker? What are the types of worker? Only give point if they say Dedicated/SharedWorker and give a sensible reason to use one.
+
+Require mark ~ (70%) to get through to interview stage
+
+AngularJS - if Angular mentiond on CV
+
+ 
+1.What is a directive? Give examples (look for custom controls, attaching behaviours)
+2.What is a scope?
+3.How does angular data binding work from a high level?
+4.What is difference between scope.$digest() and scope.$apply()? Why might you favour one over the other? What problems may one of them cause?
+5.What is the difference between factory, a service and a provider?
+6.What does ngNonBindable do? Why might you use it?
+7.What is transclusion?
+8.What is an isolate scope? Why might it be useful?
+
+Require mark of 5 to get through to interview
+
+ReactJS - if React mentioned on CV
+1.What is the virtual DOM?
+2.What is DOM reconciliation?
+3.What is a stateless component?
+4.What are the react lifecycle methods? When do they occur? componentWillMount, render, componentDidMount, componentWillReceiveProps, shouldComponentUpdate, compnentWillUpdate, componentDidUpdate, componentWillUnmount. Give point if 5/8 provided.
+5.How can immutability be useful in React? Only give point if they mentioned shouldComponentUpdate, PureComponent or 'deciding whether to render or not'.
+6.What is redux? Only give point if Store, Actions and Reducers and State are mentioned.
+7.What is a higher-order component? Give an example
+
+Require mark of 5 to get though to interview
+
+
+
+Non-techy Questions
+1.What is an equity?
+2.What is a future?
+3.What is an option?
+4.What is an algo?
+5.What is an order book?
+6.What is a fill?
+7.What is an aggressive order?
+8.What is a passive order?
+9.What is a limit order?
+10.What is a market order?
+11.What is an underlier?
+12.What is a bid price?
+13.What is an ask price?
+
+This section is more about handling stress. A lot of developers won't know the answers, but do they fall apart on the call when getting question after question wrong!? 
+
+ 
+
+CSS / UX
+
+start with what they think UX is
+Prototypying, the benefits, 
+Do you code? 
+how they manage css, what frameworks, how they work with developers etc 
+what is BEM
+so what tools they use 
+icon fonts (IMO is bad)
+SVG's are the future
+How to maintain a large scaled application for CSS, LESS, SASS, Other 
+Do they know what specififcity is 
+
+Explain what a class selector is and how it’s used
+What are pseudo classes and what are they used for?
+Explain the three main ways to apply CSS styles to a Web page
+
+What is the use of Indirect Adjacent combinator in CSS3? - Adjacent Sibling Selector x+y 1. Adjacent Sibling selector applies CSS styles to elements only if its adjacent to the specified element. 2. To create the Selector a symbol " + " is used between ...
+
+What are the powerful features of CSS3?
+
+How is Multi-Column feature used in CSS3? - You can create multiple columns to display your text. This feature allow you to give the output like newspaper. column-count property is used to create columns
+
+Describe what is meant by flex layout
+
+What tooling do you use to wireframe
+
+How do you build wireframes
+
+How do you present to the business
+
+Server
+
+Intro
+1.What is an Option[T]?  Looking for an optional value of type T
+2.Why is using options better than null?  Looking for more type safety, avoid NullPointerException
+3.What are the possible ways of handling the value of an option?  Looking for pattern matching, getOrElse, map, isDefined/get etc.
+4.If I decide to pattern match on Some(x) and None, how does that work under the hood?  Looking for unapply method in Some and == on None case Object singleton.
+5.How is it possible to have a single None for every type T, given None must extend Option[T]?  Looking for Nothing
+6.What is a case class and what does it provide?  Looking for value objects with hashCode/equals, toString, companion object with apply, unapply etc.
+7.What are the types of collections in Scala?  Looking for immutable vs mutable, parallel, Seq, Set, Map, etc.  Can ask follow ups on algorithmic complexity of various operations in different possible collections.
+8.What is a monad?  Too good an answer here may not be a good thing as it could suggest they want to do scalaz style programming.  Ideally they might mention for comprehensions, flatMap and unit or such like.  A more formal definition around a minimal set of operations that define identity and associativity would suggest they are “fully functional”.
+
+Data Structure Design
+1.Imagine I want to come up with an in-memory representation for customers’ share portfolios.  We have lots of customers and each customer can have several open positions.  What data structure would you recommend?
+2.Looking for something like Map[Customer, Seq[Position]].  If they suggest having positions as a field inside customers that’s ok but make sure they say what their outer collection type would be.  Then, you can add the additional requirements below and see if they would prefer to change their structure (e.g to something with O(1) lookup).
+3.Assuming they suggest map or such like, follow up on hashCode/equals to see how they would implement those.  Making Customer and Position case classes would be sensible suggestions.
+4.If I wanted to know the total market value of a customer’s portfolio, how would you calculate that using this structure?  You can assume the position class has a method “marketValue” which returns the current market value for that position.
+5.They should suggest looking up the customer in the map, getting a Seq of positions back and doing foldLeft, or even better sum, after mapping to marketValue.  If they choose sum, bonus points if they know how that works under the hood with Numeric type class.  If they don't choose sum, prompt them to it and see if they know Numeric.
+6.Given a List of customers, how would I get all the open positions for those customers.  Looking for flatMap over the given list of customers, passing in the map defined above.  Don’t settle for List[Seq[Position]] & if they then sugest map & flatten ask if they can do better.
+
+
+
+General
+1.Composition vs Inheritance?
+
+ Telephone Interview Questions
+
+The following open style questions are suitable for a telephone interview
+
+Core Java5
+•What are three new features of Java5?
+•Explain when to use a LinkedHashMap vs HashMap
+•What is the difference between a StringBuilder and a StringBuffer?
+•Explain type erasure in the context of Java5 Generics
+
+Maven
+•Explain what versioned dependency management is
+•What is a transitive dependency?
+•In the Maven POM explain how to change the compiler Java version source compatibility
+
+Spring
+•Explain the pros/cons of dependency injection setter vs constructor
+•What are the Required and Autowired annotations for?
+•How would you arrange your applicationContext files in a layered application?
+•What is a Callback and why it is significant when using the provided Spring Template classes?
+
+Containers
+•Why would you use a lightweight container rather than a J2EE server?
+•How would you manage transactions with a Servlet (lightweight) container not having a Java Transaction Service available?
+
+Subversion
+•What is the Subversion revision number?
+•How is branching and merging done in Subversion 1.4.x? How is it improved in 1.5?
+
+Layering
+•Explain the typical layers that you would use to code a web application
+
+OO
+•Why use composition over inheritance?
+•What are the benefits of programming to an interface?
+
+Unit Testing
+•Explain why test driven development can increase the maintainability of a code base
+•Talk me through writing a unit test for a simple POJO
+•How is the unit test run in an IDE?
+•Which do you prefer JUnit4 or TestNG, why?
+
+Integration testing
+•Explain to me the difference between unit and integration testing
+
+Database unit testing
+•Discuss frameworks for testing databases in unit tests
+
+Continuous Integration
+•Discuss the use of continuous integration in a development environment, what are the benefits?
+
+JPA/Hibernate
+•What inheritance strategies are available in JPA?
+•Explain how to map a many to many relationship in JPA?
+•Explain the syntax for joining entities in an JPA query
+•How to you eagerly fetch joined entities in a JPA query?
+
+DB2
+•How do you ensure a query runs using only indexes?
+•What is a Materialised Query Table/Materialised View?
+•How to you write a query that allows UI pagination of data?
+
+Transaction Demarcation
+•Explain how to demarcate transactions with Spring 2.x
+•Is it best practice to demarcate the interface or implementation?
+
+Threading
+•Suppose that you have to execute a job in multiple threads for performance, how would you manage transactions and threading using Java5 and Spring 2.x?
+
+Agile Methods
+•Have you worked in an agile environment?
+•Can you articulate some agile practices?
+•Talk about SCRUM when it is used and why it is used
+•How does Agile work in a distributed team?
+
+Flex and ActionScript
+•Name all the Flex frameworks you know
+•Dependency injection in Flex, benefits?
+•name the package of the class Event?
+•how would you show an Alert with FP version in Flex?
+•Is it possible to comunicate with javascript? How?
+•What class do you need to extend to make Cairngorm handle an event?
+•what are the design patters implemented by Cairngorm?
+•Name classes to communicate with Java from a Flex Application
+•how would you write getters and setters in Flex. benefits of it?
+•How would you display a checkbox in a Datagrid?
+•How would you enable a Combobox depending on the value of the checkBox
+•date field validation question
+•Communication with java - How do you link a class from Flex to Java
+•How do you link a AS class to a JAVA class in Flex?
+•What are the names of the configuration files for BlazeDS?
+•Do you need to implement anything on the Java classes?
+•Presentation model pattern? Unit testing? code reviews?
+•Display name in the screen and change the model at the same time (two way bindings)
+•Exception handling
+•What is the difference between the * and Object when defining a type ( * can be undefined)
+•How do you overload a function in ActionScript? (optional arguments, e.g. value : String = null)
+
+Scenarios
+•You have an existing project using Struts 1.0 and want to migrate it to Web 2.0 using newer frameworks. How would you approach the project? The system has over 200 screens and 200 tables.
+
+Puzzles
+•http://www.edcollins.com/logic/logic21-30.htm
+
+In your basement are three light switches, all of them currently in the OFF position. Each switch controls one of three different lamps on the floor above. You would like to find out which light switch corresponds to which lamp.
+
+You may move turn on any of the switches any number of times, but you may only go upstairs to inspect the lamps just once.
+
+How can you determine the switch for each lamp with just one trip upstairs?
+
+OO     
+1.What is the difference between and interface and an abstract class?
+2.When would I prefer to use an abstract class over an interface?
+3.What is encapsulation?
+4.What is the role of the garbage collector?
+5.What are generations?        
+
+Collections
+1.What is the Java collection API?
+2.Hashmap - give a quick explanation of how it works - (buckets and the linked list within)
+3.What to think about when using one (hashing, etc)
+4.Performance - what is the performance of a hash table with a perfect hash?
+5.Linked List – explanation
+6.Advantages and disadvantages
+7.Arraylist – explanation
+8.When would you use it over a linked list?
+9.How is an element added in the middle?
+
+Bits and Bobs
+1.Describe the primitive types
+2.How much space is allocated for double, int, char?
+3.What's the difference between a string, stringbuffer, and string builder?
+4.Checked / unchecked exceptions - describe them Which is best / which one do you prefer to use?  
+5.Describe some of the syntax enhancements introduced in Java 8?
+6.How would you choose to stream data between two Java applications – what format and why?
+
+Concurrency
+1.java.utils.concurrent was introduced in J1.5. What does it contain?
+2.What is the concurrenthashmap?
+3.What is a copyonwritearraylist?
+4.What is a Future? How would you catch an exception from one? Could Future.get() block forever?
+
+Practices   
+1.What is a mocking framework and why would I want to use one?
+2.What is acceptance testing and what frameworks have you used (not Junit!)?
+3.What parts of the spring framework have you used?
+4.What is maven and what are your opinions on it? Do the benefits outweigh the difficulties?
+
+
+FX Options Interview Questions 
+
+1.Please describe an FX Option?
+2.Could you list some standard FXO option strategies?
+3.How is a Strangle composed?
+4.What do I mean by the acronym AYE-TEE-EM (ATM)?
+5.What is a fixing date?
+6.Could you draw a payoff diagram for a long-call?a.Payout of a long call with knock out barrier?
+
+7.Could you list the standard greeks for an option?
+8.What is Delta?
+9.What is Theta?
+10.What is Gamma?
+11.What are the inputs to black-scholes?
+12.Why do we hedge options on execution?
+
+Go to start of metadata 
+
+
+
+
+Threads:
+
+-          What is the relationship between java and native threads?
+
+-          What is the resource overhead per thread?
+
+-          Methods of overcoming the start up costs of threads?
+
+-          Any other patterns for increasing parallel through put other than threads?
+
+Design patterns
+
+-          What are design patterns and why do we use them?
+
+-          What design patterns do you know?
+
+-          Please explain the decorator pattern?
+
+-          The classical singleton has been largely killed off by Spring and other IoC containers, please give the good points of the classical singleton and why we used it?
+
+GC
+
+-          Java 6 introduced the G1 garbage collector, how does it differ from the Concurrent Market and Sweep?
+
+-          What are the benefits?
+
+-          Detractors?
+
+-          Which is better for a batch system, CMS or G1?
+
+Agile
+
+-          How have you used it previously?
+
+-          What is the benefit over standard waterfall PM?
+
+-          What are the 3 questions to answer in a standup?
+
+NoSQL
+
+-          What NoSQL/Distributed Cache experience?
+
+-          What are the benefits over a normal database?
+
+-          How otherwise might you scale a normal db?
+
+-          What are concerns about highly distributed data?
+
+
+
+System Design Interview Question 
+
+This question is designed to test the Candidates ability to design a real world system. Provide paper and ask the Candidate to draw out the scenario below.
+
+When you came into this building, we got a lift to the Nth floor. Obviously the lifts are controlled by some means.
+
+I’d like you on paper to design (lines and boxes) a lift control system.
+1.What considerations would you put into the scheduling algorithm?
+2.Would there be a way to improve this with more information?
+3.Could modern technology help improve the standard lift push button interface?a.Improvements to controls?
+b.Improvements to feedback?
+
+4.System resiliency - How would this perform in a power cut?
+
+Notes
+
+Bring at least 2 sheets of A3 paper for this exercise.
+
+Look for
+1.A thought out design
+2.Ability to understand they are developing for a real world system, eg beware of collections (eg arrays) of "passengers" which wouldn't be appropriate in the system
+3.The Candidate should be able to justify all design choices.
+
+CV and Background
+
+Please describe your current project?
+
+What technology does it use? Why?
+
+What were the feeds into the system?
+
+What systems does this feed?
+
+What resiliency does your system have?
+
+What does a downstream system do, when yours goes down?
+
+What technology does an upstream system use?
+
+What is the upstream DR plan?
+
+Notes
+
+Looking for a desire to understand their environment, ability to understand how they interact in a large organisation, desire to understand what effects there work has on other teams and visa versa.
+
+Misc
+
+Why are you moving?
+
+What kind of role are you looking for?
+
+What kind of team would you like to work for?
+
+What technology interests you?
+
+Any particular home projects?

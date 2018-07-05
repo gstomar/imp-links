@@ -1,0 +1,53 @@
+java.lang.Byte, Short, Integer, Long, Character (boxing and unboxing)
+Leave a reply
+by Mikhail Vorontsov
+
+In this article we will discuss how boxing and unboxing is implemented in Java 1.5+ and what implications has such implementation. There are no differences between Java 6 and 7 implementations.
+
+Boxing is a process of conversion of primitive type variable into java.lang.Number subclass (Java.lang.Byte, Short, Integer, Long, Float, Double). Boxing is done via valueOf method. For example, for Integer it is:
+
+1
+static Integer valueOf( int i )
+Unboxing can be done from any of java.lang.Number subclasses to any primitive type. This is done via set of methods defined in java.lang.Number:
+public abstract int intValue();
+public abstract long longValue();
+public abstract float floatValue();
+public abstract double doubleValue();
+public byte byteValue() {
+    return (byte)intValue();
+}
+public short shortValue() {
+    return (short)intValue();
+}
+Implications on performance
+
+There is a common mistake done while converting String to a primitive value type. Which method is better to use: parse*(String) or valueOf(String)? The answer is parse* (parseInt, parseLong and so on). It returns a primitive value. Remember that all valueOf methods return an Object (though it may be cached sometimes – see below).
+
+
+Caching is implemented in Number_subclass valueOf(primitive_type) method. Four integer classes:Byte, Short, Integer, Long cache objects for values between -128 and 127 (both inclusive). So, the following code would always print “true”:
+
+Short i1 = -120;
+Short i2 = -120;
+System.out.println( i1 == i2 );
+java.lang.Character, as an unsigned class, caches values between 0 and 127. But one class has extended support for caching. Of course, it is Integer (most probably because int is a most widely used primitive type). Startup property “java.lang.Integer.IntegerCache.high” specifies the biggest integer value to cache. Allowed values of this property are between 127 and Integer.MAX_VALUE (all other values will be silently corrected to those two). So, if JVM was started with “-Djava.lang.Integer.IntegerCache.high=400” as a parameter, the following code would print “false”, “true”, “true”, “false”:
+
+Integer i1 = -129;
+Integer i2 = -129;
+System.out.println( i1 == i2 );
+Integer i3 = -128;
+Integer i4 = -128;
+System.out.println( i3 == i4 );
+Integer i5 = 400;
+Integer i6 = 400;
+System.out.println( i5 == i6 );
+Integer i7 = 401;
+Integer i8 = 401;
+System.out.println( i7 == i8 );
+java.lang.Float and Double do not cache anything.
+
+Summary
+
+Never call java.lang.Number subclasses valueOf(String) methods. If you need a primitive value – call parse[Type]. If you want an instance of a wrapper class, still call parse[Type] method and rely on the JVM-implemented boxing. It will support caching of most frequently used values. Never call wrapper classes constructors – they always return a new Object, thus bypassing the caching support. Here is the summary of caching support for primitive replacement classes:
+
+Byte, Short, Long	Character	Integer	Float, Double
+From -128 to 127	From 0 to 127	From -128 to java.lang.Integer.IntegerCache.high or 127, whichever is bigger	No caching

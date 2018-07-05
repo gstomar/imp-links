@@ -1,0 +1,239 @@
+Coherence Support
+https://community.oracle.com/community/fusion_middleware/coherence/coherence_support
+
+Coherence Best Practices 
+
+Introduction
+
+I have just finished a Coherence 3.6 training course. This wiki page contains information that I learned on the course. I thorughly recommend the course if you are going to be using coherence.
+
+Best Practice
+•use the same configuration for all cache servers (data nodes) in the grid AND for applications (nodes with local storage disabled).
+•do not specify local storage in the cache config file - specify it at the command line via the system property. This allows the point above to be achieved.
+•remove the coherence-cache-config.xml file from the coherence.jar file for production (and for Prime services all of our test environments) to prevent your cluster from accidently using the default cache configuration instead of your custom configuration. i.e. you may have incorrectly specified the command line parameter for setting the system property and you cluster uses the default config which would result in in-correct cache configuration.
+•don't put clusters on virtual machines because of added latency.
+•do capacity planning!
+•don't have more than two backups with a partitioned cache. Synchronisation increases and degrades performance - most clients use a single backup. Some do not use a backup if they can re-created the cache from another source (e.g. a database).
+•Ensure that the partition size is between 20MB and 50MB. The partition size is a consequence of setting the partition number. Oracle recommend that you set this number to be the prime number that ensures this size limit. If you have a choice of prime numbers, choose the one which causes the partition size to be closest to 20MB.
+•If you need to change the partition count you need to bounce the whole cluster! You could write a custom Extend Client, start a new cluster with the modified partition count, and use application to migrate data across to new cluster.
+•use java 1.6 for running coherence.
+•developers should start nodes with development mode. Nodes in production (and test environments) should be strarted with production mode. A node started in development mode cannot join a cluster started in production mode.
+•developers should start their own nodes with the system property tangosol.coherence.ttl set to a value of 0. This will prevent the node(s) multicast packets from leaving the network card.
+•use as low a value of tangosol.coherence.ttl as possible in production to prevent flooding your network with multicast packets.
+•run cache servers (data nodes) with -verbose:gc enabled.
+•always plan for backup data (in partitioned cache scheme) when setting the cache server's heap size.
+•use putAll() for loading data into a cache it will be more efficient than lots of single *put()*s.
+•Applications should be developed in clusters to highlight distribution problems with complex Entities.
+•Provide several well-known addresses to provide redundancy.
+•Set -Xms and -Xmx to be the same!
+•Inheritance is strongly discouraged for POF because you need to know the max index used by the super class which breaks inheritance.
+•serialisation/de-serialisation should be as fast as possible!
+•if you plan to run repetitive queries on objects which doesn't need all attributes of an object use an index.* if you plan to run repetitive queries on objects which doesn't need all attributes of an object use an index.
+•use POF for entities which require most performance tuning (or put another way - have the biggest impact on performance).
+•easiest way to test serialisation is the following. Start a default cache server in eclipse - start it so that it is external to your application. This will force serialisation when sending (storing) objects in the cache server.
+•serialisation comparison. The following table shows the size of the object for different serialisation technologies. A simple object (which contained a simple child object) was used. It is easy enough to do this with your own entities. More complex objects will show larger differences between the technologies.
+
+
+
+
+Format 
+
+Filters
+
+Which Filters will perform best?
+
+In all circumstances InFilter is preferable to OrFilter with EqualsFilter.
+In all circumstances AnyFilter(A,B,C,D,E) is preferable to OrFilter(A, (OrFilter( B, OrFilter( C, OrFilter( D, E))))).
+In all circumstances AllFilter(A,B,C,D,E) is preferable to AndFilter(A, (AndFilter( B, AndFilter( C, AndFilter( D, E))))).
+
+Is there a mechanism for ordering filters?
+
+Yes, if you are putting them together by hand (creating new filters). With out-of-the-box filters the algorithm is fixed.
+
+Is there any special guidance about NOT filters?
+
+Not really (other than reducing the depth of the execution tree whenever possible will improve the performance).
+
+Are query results or any aspect of filtering buffered at all?, as they seem to see a increase in performance after a while.
+
+No, this is likely just a result of the hotspot optimisations in the JVM.
+
+What doe the filter effectiveness method do?. Does it feed into some kind of query optimisation?
+
+Filter effectiveness is used for optimisation of AllFilter (AndFilted is an AllFilter of two items) and AnyFilter (OrFilter is an AnyFilter of two items). It allows the Filters to be evaluated in the order that reduces resulting keyset most aggressively and effectively. Absence of an index automatically places the Filter at the end of the evaluation chain. Naturally this applies to a single level (single AllFilter or AnyFilter), which is why using AllFilter and AnyFilter is much more effective than nested AndFilter and OrFilter expressions.
+
+Are there any tips around using indexes?
+
+Obviously that they should be used whenever possible.
+
+PartitionedFilters
+
+David talked to you about PartitionedFilters last week which might be useful. More information about PartitionedFilters can be found at: http://download.oracle.com/otn_hosted_doc/coherence/350/com/tangosol/util/filter/PartitionedFilter.html
+
+Service Guardian
+
+We do have other customers that disable the Service Guardian and go down the route you suggested in your e-mail. It is possible to disable or configure the Service Guardian based on the requirements of our application. It's job as you probably know is to attempt to resolve deadlocks in Coherence threads but this does not necessarily mean 'true deadlock' but could also be a long running process that does not issue a timely heartbeat. If you know this is the case then you may want to disable it, increase the timeouts or change the failure policy.
+
+The recommended approach is to adjust the timeout to an appropriate value and set the failure policy to "logging". This will leave the Service Guardian running but it will provide information in the log file on any stuck threads.
+
+More information can be found here: http://download.oracle.com/docs/cd/E15357_01/coh.360/e15723/tune_guardian.htm
+
+
+
+Size (bytes) 
+
+
+Default Java 339 
+ExternalizableLite 93 
+POF 75 
+•always size limit a near cache!
+•if you are using a near cache specify an invalidation policy!
+
+Things to be aware of
+•you should decide what is going to be your system of record - coherence or the database and design your architecture accordingly.
+•out of the box, coherence does not support synchronising data between two clusters (i.e. a primary cluster and a cluster running in a DR site). However there is an incubator project (this is un-supported by Oracle but used by customers in production) which provides some support for this.
+•specifying well known addresses (e.g. via the system property ... ) simply disables multi-cast for discovering nodes in the cluster. The new node will request the full set of nodes in the cluster from the node at the first well known address. Multi-cast will still be used for normal data operations.
+•a coherence (TCMP) cluster client can only connect to a single coherence cluster. To connect to multiple clusters you need to use Coherence*Extend.
+•when using partitioned cache you need spare memory on all of the nodes in the cluster. Otherwise if a node fails and leaves the cluster, the other nodes could run out of memory when re-partitioning happens and the cluster could be brought down.
+•large heap sizes for data nodes (cache servers) can be a problem because extended GC could cause the cluster to think a node has died and therefore the cluster would perform re-partitioning.
+•if you need to change the partition size you will need to bounce the cluster!
+•coherence is designed for applications which are idempotent.
+•the following table explains the ttl settings
+
+
+
+
+TTL Number 
+
+
+affect 
+
+
+0 multicast packets won't leave computer therefore only cache servers running on computer can join cluster 
+1 multicast packets won't go past the switch. Therefore all computers connected together via the switch can form a cluster 
+2 servers separated by a switch can form a cluster 
+•a cluster is defined as cluster name and multicast address.
+•different versions of coherence CANNOT be in the same cluster! To upgrade coherence you will either need to shutdown your current cluster and start up your new cluster with the new version of coherence and populate the cache from a database. Or use a Coherence*Extend client to migrate data from your old cluster to your new one.
+•coherence does not support duplicate keys
+•if two writes happen at the same time with the same key the last write wins.
+•CacheFactory.ensureCluster() will cause services to be started if they are lazzily initialised. Also ensures application config is consistent with cluster.
+•enabling local storage means that a JVM becomes the owner of some data in a cluster rather than just being a member of a cluster.
+•Data Affinity (if used with Patitioned Cache) may cause an imbalance in memory usage across the cluster!
+•Coherence tends to store objects in their serialised form.
+•Near/Local cache always stores objects in java (POJO) format.
+•If using POF format the entity must be in the classpath of the cache server before it can be used!
+•the put() call is always synchronous.
+•a near cache benefits multiple reads from the same key that occur close together in time. This cache only saves you time on gets.
+•an overflow cache uses virtual memory (its not a persistent store!). It is for the emergency situation when you have many nodes down in cluster with partitioned cache.
+•write performance of a replicated cache is slow. Replication to other data nodes is asynchronous (hmm - not sure it is asynchronous. However replicated cache write performance decreases as the number of nodes is increased since since the node to which an update occurs needs to inform all other nodes as well as receive confirmation from the other nodes that they have performed the update). Update to local node is synchronous.
+
+Serialisation
+•Coherence tends to store objects in their serialised form.
+•Near/Local cache always stores objects in java (POJO) format.
+•If using POF format the entity must be in the classpath of the cache server before it can be used!
+•POF format performs best (smaller size, leads to higher performance). Encodes entity based on long identifier. Must read indexes in ascending order. Must read and write in the same order. Each object in a complex object has it's own set of indices.
+•programatic registration of POF means you don't need to stop the cache.
+•You must flush the cache first if you change serialisation format!
+•Registration via config means you must bounce the cluster.
+•You can check programatically what types are registered.
+•you can use an external (to the entity) serialiser if you dont want to polute the entity or you do not controll its source code.
+•local cache - objects are stored in de-serialised form.
+•near cache - frequently used objects from a partitioned cache are stored here. Objects are stored in deserialised form.
+•replicated cache - stored in serialised form. When the object is accessed on a node, the object is converted into deserialised form and it remains in this form just on this node.
+•partitioned cache - all objects stored in serialised form.
+•when an object is deserialsed, the serialised form is removed and vice-versa. There is only ever a single form of an object in a cache.
+•a large expense of distributed operations i serialisation/de-serialisation of objects.
+
+Events
+•MapListener - called after an event has happened.
+•MapTrigger - called before event "occurs". Can "ban/prevent" an event from happening - e.g. a cache put.
+•Sequence of events is not guaranteed.
+•Triggers can provide auditing.
+•Invocation services run on cluster nodes.
+•ValueUpdates allows you to update an object/entity in serialised form.
+•A MapListener is executed in application code.
+
+
+ 
+
+
+
+
+
+ Best Practice
+It is recommended not to use an Anonymous MapListener because when debugging you don't know which listener you are dealing with. 
+
+ 
+•Triggers are synchronous.
+•Each cache entry owner will log exception and throw exception to client which caused the exception to be thrown.
+•Triggers can be added programmatically or via config.
+
+Backing Map Listener
+•A BackingMap is a cache that manages the actual data.
+•Backing Map Listeners operate on the serialised form of the objects.
+•Backing Map Listeners are registered and embedded on the server side only.
+•They are not affected by node failure unlike normal listeners - if client fails event is lost.
+•They are very powerful!
+
+Continuous Query Cache
+•e.g. a near cache that is always up to date.
+•used in Financial Companies for Portfolio Management.
+
+Misc
+•Replicated caches are not used much by customers (no bugs have been fixed since 2005!)
+•Partitioned cache is the most popular scheme (used in > 90% of deployments).
+•Coherence understands rack definition and tries not to put the backup partition on a node which is in the same rack as the node with the primary partition.
+
+Advice from Oracle Coherence Book
+
+Domain Objects
+•aggregate entities are composite entities, composed of a root entity and one or more weak entities. They ae typically stored in a cache.
+•Dependent entities typically have no meaning without their owner, e.g. order lines without their order, accounts without their owner, children without their parents.
+•Value objects have no identity outside of their containing object, represent complex or hierarchical values within an entity, are often considered attributes of an entity, and are typically immutable.
+•Aggregates represent units is of consitency from a business perspective, and the easiest way to achieve atomicity and consistency when using coherence is to limit the scope of the mutating operations to a single cache entry. Because of this you should always store whole aggregates as individual cache entries.
+•an exception to this rule is if the aggregate root contains a unbounded continuous growing collection of dependent entities such as Account and Transaction. In this case is makes sense for the dependent objects to be stored in their own cache to avoid inifinte growth of the aggregate object and to allow different caching policies to be used (e.g. limit cache so that it only stores N days worth of transactions).
+•Properties of relationships:•association - entities in a relationship exist indenpendently of the relationship. e.g. phones may exist without an owner.
+•composition - entities on one side of the relationship exist only if the relationship exists. e.g. children cannot exist without a parent.
+
+•use identities to manage an entity relationship. e.g. an account has a customer id. To get the customer entity look it up in the customer cache by identity - identity lookup in coherence is fast especially if you use a near cache. This is a good way to handle a one to one relationship between entities.
+public class Account {
+
+private final Long customerId;
+
+public Customer getCustomer()
+{
+  // looks up customer in cache by identity (key).
+  return getCustomerRepository().getCustomer(customerId);
+}
+}
+
+•one to many relationships there are two options:•query the cache on the many side of the relationship. e.g for Account containing many Transactions you could query the transactions cache for all transactions that have a specific account. Remember to use an index on the accountId field!
+•a more performant approach is to store the identifiers of the child entities within the parent and perform a getAll() operation on the child cache. Identity operations are very fast in coherence - much faster than queries!
+
+public class Customer{
+
+private final Collection<Long> accoountIds;
+
+public Collection<Account> getAccounts()
+{
+  // looks up all accounts in cache by identity (key).
+  return getAccountsRepository().getAccount(accountsIds);
+}
+}
+
+
+This approach works if there are a finite number of child objects and you dont need to constrain the results in way. The above works for customer and accounts as there will be a finite number of accounts per customer. But would not work for account and transactions - quering against the transaction cache is a better approach.
+•Key association is not limited to aggregates and can be used to ensure that any related entities are collocated within the same partition. Separately stored weak entities are very good canditidates for key association (data affinity).
+
+
+ 
+
+
+
+
+
+ Data affinity might prevent coherence from fully balancing the cluster. THerefore you only want to use data affinity if the associated objects are naturally wel balanced. 
+
+ 
+•value objects do not have an identity, they simply represent values from the domain and should not be stored in a cache (e.g. Money, Currency etc).
+ 

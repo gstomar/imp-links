@@ -1,0 +1,131 @@
+Akka different jar versions
+akka-stream
+akka-actor
+akka-presistence
+akka-remote
+akka-cluster
+akka-testkit
+akka-protobuf
+akka-testing
+
+Akka provides life cycle methods for Actor. There are following methods to which you can override and provide specific implementation accordingly.
+
+Akka Actor life cycle methods
+preStart()
+postStop()
+preRestart(reason: Throwable, message: Option[Any])
+postRestart(reason: Throwable)
+
+actorOf() create the Actor instance.
+
+def main(args:Array[String]){  
+    val actorSystem = ActorSystem("ActorSystem");  
+    val actor = actorSystem.actorOf(Props[LifeCyleMethodsExample],"RootActor");  
+    actor ! "Hello"  
+  }  
+  
+What is Akka
+
+Akka is a open-source library or a toolkit. It is used to create concurrent, distributed and fault-tolerant application. You can integrate this library into any JVM(Java Virtual Machine) support language. 
+Akka is written in Scala. It implements Actor Based Model. The Actor Model provides a higher level of abstraction for writing concurrent and distributed applications. It helps to developer to deals with explicit locking and thread management. Akka makes it easier to write correct concurrent and parallel application.
+
+Actor
+
+An actor is an entity which communicates to other actor by message passing. Actor has it's own state and behavior. As in object-oriented programming everything is an object same like everything is an actor in actor-based system.
+In other words, we can say that an actor is an object that encapsulates state and behavior.
+
+How to create an Actor?
+
+You can create actor by extending Actor trait and implementing it's receive method. This method is called each time a message is received by the actor. The receive method does pattern matching on the received message and decide what to do.
+
+Akka ActorSystem
+
+The ActorSystem is a root actor in actors structure. An ActorSystem is a hierarchical group of actors which share common configuration, e.g. dispatchers, deployments, remote capabilities and addresses. It is also the entry point for creating or looking up actors. It is an abstract class which extends to ActorRefFactory trait.
+ActorSystem provides an actorOf() method which is used to create actor instance.
+
+Akka ActorSystem Components
+
+1) Dead Letter Office
+
+Messages which cannot be delivered will be delivered to an actor called deadLetters. Messages sent via unreliable network will be lost without forwarding to dead letter office. The main use of this facility is for debugging purpose, especially if a message sent by an actor does not arrive consistently. You can implement this by importing akka.actor.DeadLatter package.
+
+2) User Guardian Actor
+
+It is parent actor of actors created by user by using ActorSystem. This special guardian is used to achieve an orderly shut-down sequence where logging remains active while all normal actors terminated. It monitors all user created actors.
+
+3) System Guardian Actor
+
+This actor works same as user guardian actor except that it works for system actors. The system guardian monitors the user guardian and initiate its own shut-down upon reception of the Terminated message.
+
+4) Scheduler
+
+Scheduler is a trait and extends to AnyRef. It is used to handle scheduled tasks. It provides the facility to schedule messages. You can schedule sending of messages and execution of tasks. It creates new instance for each ActorSystem for scheduling tasks to happen at specific time.
+
+It returns a cancellable reference so that you can cancel the execution of the scheduled operation by calling cancel method on this reference object.
+
+You can implement Scheduler by importing akka.actor.Scheduler package.
+
+5) Event System
+
+The Event System also known as eventStream is a main event bus for each ActorSystem. It is used to carry log messages and dead latters. You can also used it to publish messages across entire ActorSystem. You can get eventStream reference by calling actorSystemRef.eventStream() method.
+
+6) Configuration
+
+ActorSystem provides a configuration component which is used to configure application. You can access it from your actor system.
+
+Akka Props
+
+Props is a configuration class which is used to specify options while creating an actor. It is immutable, so it is thread-safe and shareable.
+
+You can implement Props by importing akka.actor.Props package.
+
+You can create actor by passing a Props instance into the actorOf() factory method which is available in ActorSystem and ActorContext. The actorOf() method returns an instance of ActorRef. This instance is immutable and has one to one relationship with the actor it represents. ActorRef is also serializable so that you can serialize it.
+
+In the following example, we are creating an Actor by using Props.
+
+Akka Creating Child Actor
+
+Akka provides facility to create child actor. You can create child actor by using implicit context reference. ActorSystem is used to create root-level or top-level actor. Akka provides you context so that you can create child actor also. 
+
+Akka Actor Communication
+
+Akka Actor Send Messages
+
+Akka provides two predefined methods tell() and ask() for message exchange. An actor can send messages to another Actor through these following methods.
+
+1) Akka Actor tell() Method
+
+It is used to send a message asynchronously. It does not wait and block thread for a message. It works on "fire-forget" approach. You can also use ! (bang) exclamation mark to send message. This is the preferred way of sending messages. It gives the best concurrency and scalability characteristics.
+
+If this method is invoked from within an Actor, the sending actor reference will be implicitly passed along with the message.
+If this method is invoked from an instance that is not an Actor, the sender will be deadLetters actor reference by default.
+
+2) Akka Actor ask Method
+
+In akka, ask is a pattern and involves Actors as well as Futures. Ask is used to sends a message asynchronously and it returns a Future which represents a possible reply. If the actor does not reply and complete the future, it will expire after the timeout period. After timeout period, it throws an TimeoutException. You can use either ? (question mark) or ask() to send message.
+
+You should always prefer tell method for performance and ask method, if you want response.
+
+Akka Actor Reply Messages
+
+You can reply to a message by using sender() method. This method gives you ActorRef which is a instance of sender Actor. You can also store this reference. Replying to a message is simple, you just need to use sender() ! ReplyMsg.
+
+If there is no sender i.e. a message which is sent without an actor or future context, the default sender is a 'dead-letter' actor reference.
+
+Akka Actor Forward Message
+
+You can forward a message from one actor to another. In this case, address/reference of an Actor is maintained even though the message is going through a 'mediator'.
+
+It is helpful when writing actors that work as routers, load-balancers, replicators etc.
+
+import akka.actor.{Actor,ActorSystem, Props};
+
+Akka Stopping Actors
+
+In Akka, you can stop Actors by invoking the stop() method of either ActorContext or ActorSystem class. ActorContext is used to stop child actor and ActorSystem is used to stop top level Actor.
+
+The actual termination of the actor is performed asynchronously.
+
+There are some other methods available in Akka, which are used to stop Actor. Some of which are PoisonPill, terminate() and gracefulStop() are used to stop Actor.
+
+

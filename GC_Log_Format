@@ -1,0 +1,26 @@
+Anatomy of GC Log Statement
+2014-11-18T16:39:37.728-0800: 88.808: [Full GC [PSYoungGen: 116544K->12164K(233024K)] [PSOldGen: 684832K->699071K(699072K)] 801376K->711236K(932096K) [PSPermGen: 2379K->2379K(21248K)], 3.4230220 secs] [Times: user=3.40 sys=0.02, real=3.42 secs]
+
+Let’s pick apart this log statement and examine each field in it:
+
+2014-11-18T16:39:37.728-0800 – Time stamp at which GC ran.
+
+Full GC – Type of GC. It could be either ‘Full GC’ or ‘GC’.
+
+[PSYoungGen: 116544K->12164K(233024K)] – After the GC ran the young generation, space came down from 116544k (i.e. 113mb) to 12164k (i.e. 12mb). Total allocated young generation space is 233024k (i.e.227mb).
+
+[PSOldGen: 684832K->699071K(699072K)] – After the GC ran the old generation space increased from 684832k (i.e. 669mb) to 699071k (i.e. 682mb) and total allocated old generation space is 669072k (i.e. 682mb). In this case after the GC event, old generation's space increased and didn't decrease, which isn't the case always. Here size has increased because all objects in Old generation are actively referenced + objects from young generation are promoted to old generation. Thus you are seeing the increase in the old generation size.
+
+801376K->711236K(932096K) – After the GC ran, overall memory came down from 801376k to 711236k. Total allocated memory space is 932096k (i.e. 910mb).
+
+[PSPermGen: 2379K->2379K(21248K)] – After the GC ran, there was no drop in perm generation space.
+
+3.4230220 secs – the GC took 3.42 seconds to complete.
+
+[Times: user=3.40 sys=0.02, real=3.42 secs] – Real is wall clock time (time from start to finish of the call). This is all elapsed time including time slices used by other processes and time the process spends blocked (for example if it is waiting for I/O to complete).
+
+User is the amount of CPU time spent in user-mode code (outside the kernel) within the process. This is only actual CPU time used in executing the process. Other processes, and the time the process spends blocked, do not count towards this figure.
+
+Sys is the amount of CPU time spent in the kernel within the process. This means executing CPU time spent in system calls within the kernel, as opposed to library code, which is still running in user-space. Like user, this is only CPU time used by the process.
+
+In your case, if the CPU time (3.4 sec) is considerably higher than the real time passed (3.42 Sec), we can conclude that the GC was run using multiple threads. To learn more about the difference between each of these Times, please check out this article.

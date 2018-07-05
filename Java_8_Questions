@@ -1,0 +1,320 @@
+http://www.topjavatutorial.com/
+http://www.buggybread.com/search/label/java8
+
+What is lambda expression ?
+A lambda expression is a method without a name, access specifier or return value declaration, i.e an anonymous method.
+the general structure of a lambda expression:
+(argument list) -> { body }
+
+What are advantages of lambda expression ?
+We can pass a lambda expression as an object to a method. This reduces the overhead involved in passing an anonymous class.
+We can also pass a method as a parameter to another method using lambda expressions.
+
+What is a functional interface ?
+A functional interface is an interface with only one abstract method.
+The main advantage of functional interface is that it can be used to refer to a lambda expression or as a method interface.
+These are needed to execute a lambda expression or method.
+
+What is the type of a lambda expression ?
+The type of a lambda expression depends on the context it is being used.
+(int x,int y) -> {return x+y;}
+Often, the type is inferred by the Java compiler.
+
+What is the target type of a lambda expression ?
+The target type of a lambda expression represents a type to which the expression can be converted.
+All lambda expressions are converted to a functional interface type. So, the target type is functional interface.
+
+What is the difference between an interface with default method and an abstract class ?
+When we add default method to an interface, it looks like an abstract class, but they are not the same.
+An abstract class can have constructors, instance variables, concrete methods, but we can’t have instance variables or constructors in the interface.
+An interface with single default method can be used to refer to a lambda expression, but an abstract class cannot be used to refer to lambda expressions.
+
+Are the abstract classes still useful?
+Abstract classes can still do more in comparison to Java 8 interfaces:
+Abstract class can have a constructor. The interface has no constructors to be invoked by the descendants
+Abstract classes are more structured and can hold a state.
+In comparison, Interface methods are all public, field members are all constants (final & public). You may want to restrict access privileges of methods and/or make them operate on non-constant state.
+A child class can call upon the abstract class method(s) by super, while it can not do so on default interface methods.
+Type clarity:
+You can only extend one class. This makes it clearer what your object is an how to use it.
+The diamond problem:
+The problem occurs when you inherit from two places that declare the same method, and you have to pick one when resolving a function call.
+You have to implement all of the default methods in an interface to help avoid the diamond problem. If the interface is Collections, this can be a huge pain since there are a billion of them. With an abstract class, you only overwrite what you need to.
+
+
+What is the difference between a predicate and a function 
+A predicate takes one argument and returns a boolean value.
+A function takes one argument and returns an object.
+Both are useful for evaluating lambda expressions.
+
+What is the difference between a collection and a stream ?
+A collection contains group of objects in memory.
+A stream is specific to lambda expressions. Stream contains objects taken from collection that can be easily acted on using lambda expressions.
+
+What is the difference between intermediate and terminal operations in streams ?
+Intermediate operations return a stream as the result of the operation.
+Terminal operations return a value as result.
+
+
+What are Static Interface Methods in Java 8 ? How are static Interface methods invoked ?
+JDK 8 added the ability to define one or more static methods in an interface.
+Since its static, a static method defined by an interface can be called independent of any object. So, no implementation of the interface is required for calling the static method.
+Here is the general syntax of accessing an Interface static method :
+InterfaceName . staticMethodName
+
+What is Optional in Java 8 ?
+Java 8 added a new class java.util.Optional that provides a way to handle situations where a value may or may not be present.
+Optional is a container object which may or may not contain a not null value.
+Optional class forces us to deal with absense of a value. This helps prevent Null pointer exceptions at runtime.
+
+
+Why use Optional in Java 8 ? 
+We normally assign null to a variable to indicate that it doesn’t have a value.
+However, this frequently results in a NullPointerException if we to try to find value by dereferencing.
+To prevent this, we normally add frequent NULL checks in our code to check if a variable is not empty before we use it in our program.
+Optional provides a better approach to handle such situations.
+
+How can you obtain current Date/Time using Java 8 Date Time api ?
+Java 8 introduced a new java.time package which contains LocalDate, LocalTime and LocalDateTime classes.
+These classes can not be instantiated with new operator.
+To get the current Date and Time, we can use the static now() method of LocalDate and LocalTime classes.
+
+LocalDate date = LocalDate.now();
+System.out.println(date);
+LocalTime time = LocalTime.now();
+System.out.println(time);
+LocalDateTime dateTime = LocalDateTime.now();
+System.out.println(dateTime);
+
+How to convert String to LocalDate, LocalDateTime in Java ?
+The Java 8 LocalDate-Time API includes a parse() method, which can be used to parse a given input string using a specified format.
+For example,LocalDate newDate = LocalDate.parse("2016-08-23");
+System.out.println("Parsed date : " + newDate);
+Output :Parsed date : 2016-08-23
+LocalDateTime newDatetime = LocalDateTime.parse("2016-08-23T12:23:45");
+System.out.println("Parsed datetime : " + newDatetime);
+Output :Parsed datetime : 2016-08-23T12:23:45
+You can also use DateTimeFormatter to parse a string using custom patterns like dd/MM/yyyy or yyyy MM dd.
+
+What is the purpose of join() method introduced in Java 8 ?
+Java 8 added overloaded static join methods that join multiple strings into a single string.
+
+Explain the Java 8 Stream map() method.
+The map() method is useful to map the elements of one stream to another.
+For example, the following map() operation converts each string to uppercase.
+List<String> countries = Arrays.asList("Australia","Brazil", "China","Denmark","England","France","Germany");
+countries.stream().map(name -> name.toUpperCase())
+                            .forEach(System.out::println);
+                            
+
+How to sort a Map in Java 8 ?
+We can use the Stream sorted() method for this. This method sorts the elements in ascending order and returns the sorted stream.
+Stream<Map.Entry<String, String>> stream = countryCapitalMap.entrySet()
+                .stream();
+stream.sorted(Map.Entry.comparingByKey()).forEachOrdered(
+                c -> sortedMap.put(c.getKey(), c.getValue()));
+
+How can we execute statements in parallel using a for loop ?
+For loop(and other looping constructs) execute operations in a sequential manner. So, we can’t execute a for loop in parallel.
+However, Streams facilitate parallel execution.
+Here is how we can use Streams to execute instructions in parallel.
+List<String> countries = new ArrayList<String>();
+countries.add("india");
+countries.add("japan");
+countries.add("china");
+countries.add("indonesia");
+countries.parallelStream().forEach((country) -> {
+    System.out.println(country);
+});
+
+What is Spliterator in Java SE 8 ?
+JDK 8 introduced the new type of iterator called Spliterator.
+Spliterator supports parallel programming. But, you can use Spliterator even if you don’t need parallel execution.
+A Spliterator may traverse elements individually (tryAdvance()) or sequentially in bulk (forEachRemaining()).
+
+ListIterator
+ListIterator is available only in collections that implement the List interface.
+A ListIterator gives us the ability to access the collection in either forward or backward direction and lets you modify an element.
+ 
+Spliterator
+forEachRemaining(Consumer action)
+forEachRemaining() method performs the given action for each remaining element, sequentially in the current thread, until all elements have been processed
+Spliterator<String> iter4 = countries.spliterator();
+iter4.forEachRemaining(country -> System.out.print(country + " ")); 
+
+tryAdvance(Consumer action)
+tryAdvance() method executes an action on the next element in iteration. It returns true, if there is a next element.So, you have do use it in a looping construct.
+Spliterator<String> iter3 = countries.spliterator();
+while(iter3.tryAdvance(country -> System.out.print(country + " ")));
+
+PriorityQueue keeps elements sorted and it can have duplicates.
+add() and offer() methods both offer same functionality.
+poll() method removes the first element in queue and returns it, while peek() method returns the first element without removing it.
+
+replace() method in ConcurrentHashMap
+If we need to replace the value for an existing key, we can normally do so with following code :
+     if (map.containsKey(key)) {
+       return map.put(key, value);
+     } 
+However, in multithreaded environment, this can lead to race condition.
+For this, ConcurrentHashMap provides a method replace() to replace the value for an existing key.
+
+
+TreeMap class extends AbstractMap and implements NavigableMap interface.
+It creates a map stored in a tree structure.
+TreeMap is sorted according to natural ordering of keys or by using an implementation of the Comparator interface.
+ 
+HashMap uses hashcode() and equals() methods to look for an element. TreeMap uses compareTo() and compare() methods to compare the keys.
+
+LinkedHashMap just adds one more method to the list of methods already available in HashMap.
+removeEldestEntry(Map.Entry)
+This method can be overriden to remove the oldest entry in the map.
+
+A WeakHashMap implements a map that uses a weak reference to the keys. 
+This allows an element in the map to be garbage-collected when the key is unused. 
+It supports null values and the null key. 
+WeakHashMap class is not synchronized. A synchronized WeakHashMap may be constructed using the Collections.synchronizedMap method.
+
+IdentityHashMap extends AbstractMap and implements the Map interface. 
+It is similar to HashMap except that it uses reference equality when comparing elements. 
+Instead of using the equals() method to compare entries, IdentityHashMap compares them using the == operator 
+So, two object references are considered equal if they refer to the same object instance.
+
+What are new features introduced with Java 8 ?
+Ans. Lambda Expressions , Interface Default and Static Methods , Method Reference , Parameters Name , Optional , Streams, Concurrency.
+
+Difference between Predicate, Supplier and Consumer ? 
+Ans. Predicate represents an anonymous function that accepts one argument and produces a result.
+Supplier represents an anonymous function that accepts no argument and produces a result.
+Consumer represents an anonymous function that accepts an argument and produces no result.
+
+Can we have a default method definition in the interface without specifying the keyword "default" ? 
+Ans. No. Compiler complains that its an abstract method and hence shouldn't have the body.
+
+What are Default Methods ?
+Ans. With Java 8, We can provide method definitions in the Interfaces that gets carried down the classes implementing that interface in case they are not overridden by the Class. Keyword "default" is used to mark the default method.
+
+Can we access Interface static method using Interface references ?
+Ans. No, It will be compile time error. only using Interface Name.
+
+Can we have default method with same name and signature in the derived Interface as the static method in base Interface and vice versa ?
+Ans. Yes , we can do that as static methods are not accessible using references and hence cannot lead to conflict. We cannot do inverse as Default methods cannot be overridden with the static methods in derived interface.
+
+Name few Java 8 annotations ?
+Ans. 
+@FunctionalInterface annotation, introduced in Java SE 8, indicates that the type declaration is intended to be a functional interface, as defined by the Java Language Specification.
+@Repeatable annotation, introduced in Java SE 8, indicates that the marked annotation can be applied more than once to the same declaration or type use.
+
+What is the @FunctionalInterface annotation ?
+Ans. This is an informative annotation that specify that the interface is a functional interface. A Function Interface has only one abstract method and many default methods. Compiler generates an error if the interface specified with the annotation doesn't abide by the specifications for functional interface.
+
+Difference between final and effectively final ? Why is effectively final even required ?
+Ans. Final variable means a variable that has been declared final and hence cannot be changed after initialization.
+Effective final means a variable that has not been declared final but haven't been reassigned the value after initialization.
+First is the regulation that restricts the reassignment and will raise a compilation error if we try to do so. Second is the outcome without the restriction.
+Effective Final is the eventual treatment of the variable that is required for many features. For eq - Java 8 requires that
+local variables referenced from a lambda expression must be final or effectively final
+It means all local referenced from lambda expressions must be such that their value shouldn't be changed after initialization whether declared final or not.
+
+Difference between DoubleSummaryStatistics , IntSummaryStatistics and LongSummaryStatistics ?
+Ans. They all does the same task i.e to compute statistical information on the stream of data. They differ by the way they store the statistical information as they expect a different data type of the values being used. 
+IntSummaryStatistics and LongSummaryStatistics expect non floating point values and hence stores the statistical information like min,max and sum as non floating values ( int or long ) whereas DoubleSummaryStatistics stores these information as floating value.
+
+StringJoiner is a util method to construct a string with desired delimiter. This has been introduced with wef from Java 8.
+Sample Code
+StringJoiner strJoiner = new StringJoiner(".");
+strJoiner.add("Buggy").add("Bread");
+System.out.println(strJoiner); // prints Buggy.Bread
+
+Optional - Classes and Interfaces
+
+Name	                Type	Parent	                    Since	Detail
+Optional	            Class	java.lang.Object	            1.8	Link
+OptionalDataException	Class	java.io.ObjectStreamException	1.1	Link
+OptionalDouble	      Class	java.lang.Object	            1.8	Link
+OptionalInt	          Class	java.lang.Object	            1.8	Link
+OptionalLong	        Class	java.lang.Object	            1.8	Link
+
+Java - Memory - Classes and Interfaces
+
+Name	                    Type	Parent	Since	Detail
+MemoryHandler	            Class	java.util.logging.Handler	1.4	Link
+MemoryMXBean	            Interface		1.5	Link
+MemoryManagerMXBean	      Interface		1.5	Link
+MemoryNotificationInfo	  Class	java.lang.Object	1.5	Link
+MemoryPoolMXBean	        Interface		1.5	Link
+MemoryType	              Class	java.lang.Enum	1.5	Link
+MemoryUsage	              Class	java.lang.Object	1.5	Link
+OutOfMemoryError	        Class	java.lang.VirtualMachineError	1.0	Link
+
+Lambda - Classes and Interfaces
+
+Name	                    Type	Parent	Since	Detail
+LambdaConversionException	Class	java.lang.Exception		Detail
+LambdaMetafactory       	Class	java.lang.Object		Detail
+SerializedLambda	        Class	java.lang.Object		Detail
+
+BaseStream	Interface	java.util.stream	Base interface for streams, which are sequences of elements supporting sequential and parallel aggregate operations.	
+BiConsumer	Interface	java.util.function	Represents an operation that accepts two input arguments and returns no result.	
+BiFunction	Interface	java.util.function	Represents a function that accepts two arguments and produces a result.	
+BiPredicate	Interface	java.util.function	Represents a predicate (boolean-valued function) of two arguments.	
+BinaryOperator	Interface	java.util.function	Represents an operation upon two operands of the same type, producing a result of the same type as the operands.	
+BooleanSupplier	Interface	java.util.function	Represents a supplier of boolean-valued results.
+CompletableFuture. AsynchronousCompletion Task	Interface	java.util.concurrent	A marker interface identifying asynchronous tasks produced by async methods.
+CompletionException	Class	java.util.concurrent	Exception thrown when an error or other exception is encountered in the course of completing a result or task.
+Consumer	Interface	java.util.function	Represents an operation that accepts a single input argument and returns no result.
+DoubleBinaryOperator	Interface	java.util.function	Represents an operation upon two double-valued operands and producing a double-valued result.
+DoubleConsumer	Interface	java.util.function	Represents an operation that accepts a single double-valued argument and returns no result.
+DoubleFunction	Interface	java.util.function	Represents a function that accepts a double-valued argument and produces a result.
+DoublePredicate	Interface	java.util.function	Represents a predicate (boolean-valued function) of one double-valued argument.
+Function	Interface	java.util.function	Represents a function that accepts one argument and produces a result.
+IntUnaryOperator	Interface	java.util.function	Represents an operation on a single int-valued operand that produces an int-valued result.
+LongBinaryOperator	Interface	java.util.function	Represents an operation upon two long-valued operands and producing a long-valued result.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

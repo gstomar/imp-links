@@ -1,0 +1,680 @@
+What's This All About?
+
+I think Clojure is a great language that allows us to have concise, elegant programs that do complex things.
+I know some other people are unconvinced. For example, I've heard people suggest that Clojure is good for scripting and data manipulation, and that that's about it.
+I think one of the reasons for this misconception is that people are basing their judgement on Clojure code that is not designed for understandability, testability and maintainability.
+I want to demonstrate that it is possible to have Clojure code that is structured in a way that uses well-established principles of software engineering, and to make it easier for us all to do so.
+
+More Details
+
+I want code that:
+•does the basic things that need to be done by any Clojure service (eg sets up logging properly, avoids the JVM problem of threads dying silently, provides a health endpoint and defines JVM -Xms and -Xmx values)
+•other people can understand (and that I can understand when I return to it in a few weeks or months)
+•is easy to run and work on on a development machine
+•is broken down into pieces, each of which has a clear responsibility.
+
+This gives rise to code that is understandable, testable and maintainable.
+
+What is Clojure?
+
+Clojure is functional programming language, and is a modern version of Lisp. Read on for details…
+
+Functional Programming Languages
+
+Functional programming languages avoid side effects. There are two parts to this:
+•They have immutable data structures. If you have a thing such as a vector or a map it does not change over time just as a number like 42 does not change over time. You can build new data structures with incremental changes to old ones, but the original remains unchanged.
+•Variables are not actually variable. If you have a thing stored in a variable the thing that is stored remains the same thing over time.
+
+Heating up the CPUThis makes programs easier to understand and reason about. But how can a program with these constraints can do anything useful? As Simon Peyton Jones said, a program without side effects does nothing but heat up the CPU.
+
+There are different ways around this. Clojure's approach is not to be a pure functional language; it does support state that changes over time, but in a carefully managed way. Typically, the state in a Clojure program is for things such as pieces of your domain model or information about system resources you are using, and not for low-level things such as loop counters or other control mechanisms.
+
+Another characteristic of functional programming languages is support for first-class functions. Functions can be treated just like any other values. They can be stored in variables and data structures, they can be passed as arguments to functions and they can be returned as the result of a function. This leads to an elegant and concise style of programming.
+
+Lisp
+
+
+Lisp, as everyone knows, stands for "Lots of Incomprehensible Silly Parentheses". It's good for artifical intelligence and teaching the principles of recursion and not much else. People who use Lisp are weird.
+
+Well, that was probably the received wisdom for many years. That perception is changing, though, thanks in good measure to Clojure.
+
+Lisp has an ancient history. The first Lisp was invented in 1958, and the underlying principles of what makes a Lisp have not changed since. Yet Lisp has more than kept up with fashions in programming languages — it has often led the way.
+
+The defining feature of Lisp is its parenthesised prefix notation. Instead of 1 + 2 * 3 Lisp has (+ 1 (* 2 3)). This leads to the idea that Lisp code has lots of parentheses. That may be true for things like arithmetic expressions but it turns out not to be true in general. In more typical chunks of code the number of parentheses is similar to other languages; the parentheses are just in different places.
+
+The syntax of Lisp corresponds very closely to an abstract syntax tree — there is a direct mapping from Lisp source code to a data structure representing the code. In fact, in a very real sense Lisp code is data.
+
+It is Lisp's syntax that leads to its great flexibility. Lisp has a powerful macro facility that leverages this code-as-data idea, and allows new language features to be defined in a way that makes them appear to be part of the core language. This explains why Lisp has been able to stick around for so long, morphing itself along the way to incorporate modern ideas at each stage of its development.
+
+The essence of Lisp has, however, remained unchanged throughout its history..
+
+Sane Concurrency
+
+Clojure has built-in support for concurrency of multiple threads running on a single processor with shared memory. (It does not address concurrency across multiple processors, at least not within the language.)
+
+Immutability is a massive help here. The combination of concurrency and mutable data leads to programs that are notoriously difficult to understand, modify and debug. Clojure avoids many of these issues.
+
+And Finally…
+
+The idea of this blog post has been to give a flavour of what Clojure is, and what Lisp is. There's nothing concrete here and it probably seems very hand-wavy. I'll fix that in future blog posts!
+
+
+Clojure imp links
+http://tonsky.me/blog/readable-clojure/
+Another great clojure site: https://clojuredocs.org/ - It helps to search any clojure API and samples
+http://clojurekoans.com/
+Tutorial / Problems https://www.4clojure.com/ 
+Cookbook http://en.wikibooks.org/wiki/Clojure_Programming/Examples/Cookbook 
+Clojure Docs http://clojuredocs.org 
+Core Quick Ref http://clojuredocs.org/quickref/Clojure%20Core 
+ Cheatsheet  http://clojure.org/cheatsheet 
+REPL: http://tryclj.com/
+
+Useful lein Commands
+lein deps
+lein repl
+lein run
+ 
+
+
+Introduction
+
+In an earlier blog post (An Introduction to Clojure), I said that Clojure is an impure functional language because it supports side effects. In this post I begin to explore Clojure's approach to managing state and supporting concurrency.
+
+In an idiomatic Clojure program, most code is purely functional and code that changes state is localised. As I said in my previous post, typically the state in a Clojure program is for things such as pieces of your domain model or information about system resources you are using, and not for low-level things such as loop counters or other control mechanisms.
+
+Clojure combines this with an approach to concurrency that does not require the programmer to use locks.
+
+Managing State
+
+State is managed using Clojure's reference types. An instance of a reference type is known as an identity. At any given time an identity has state (a value), and it can have different states at different times. That state can be a composite value — which includes maps, vectors etc, and nestings of them within each other.
+
+There are four kinds of reference type: vars, atoms, refs and agents.
+
+If you have written more than a tiny amount of Clojure, you will have come across vars already. Clojure's def macro defines a var. In addition to being places to store global definitions, vars support thread-local state. I won't say more here, but I may expand on this in a future post.
+
+Atoms are Clojure's most basic reference type, and most of this post is devoted to them. They allow multiple threads to update an identity without treading on each others toes.
+
+Refs allow multiple threads to update multiple identities in a coordinated way. I will mention them briefly at the end of this post.
+
+Agents are identities that have queues of actions associated with them (where the actions are functions waiting to be run). I won't say more about agents in this post.
+
+Managing when Computation Happens
+
+Clojure's reference types have concurrency semantics (hinted at above), but Clojure also provides futures, delays and promises for more explicit control of concurrency.
+
+I won't say more about this here, but I plan to expand on this in a future post.
+
+Atoms
+
+Atoms are Clojure's most basic reference type. They are fast, and they have the following characteristics:
+•they are shared between threads
+•they are synchronous (if you perform an operation on an atom, you wait for it to complete)
+•they are not coordinated (updating applies to a single atom at a time)
+•updates can fail and are retryable.
+
+Creating Atoms
+
+Atoms are created using the atom function:
+
+
+
+
+
+
+
+
+
+(def my-number-atom (atom 0))
+
+;; => #<Var@10968c3c: #<Atom@43931117: 0>>
+ 
+
+
+This defines an atom, with current state set to 0. The atom is stored in my-number-atom. (More precisely, the atom is stored in a var which is named by the symbol my-number-atom, but we don't need that degree of precision. If you look closely at the REPL output above, you will see that it shows a var which contains an atom, and the atom contains the value 0.)
+
+Finding the Current Value of an Atom
+
+We can look up the current value of an atom using deref:
+
+
+
+
+
+
+
+
+
+(deref my-number-atom)
+
+;; => 0
+ 
+
+
+@ is a shorthand for deref:
+
+
+
+
+
+
+
+
+
+@my-number-atom
+
+;; => 0
+ 
+
+
+Modifying an atom with swap!
+
+The most common way to modify an atom is with swap!:
+
+
+
+
+
+
+
+
+
+(swap! my-number-atom inc)
+
+;; does this: (inc 0)
+
+  
+
+@my-number-atom
+
+;; => 1
+
+  
+
+(swap! my-number-atom inc)
+
+;; does this: (inc 1)
+
+  
+
+@my-number-atom
+
+;; => 2
+ 
+
+
+swap! takes an atom as its first argument, followed by a data function. The data function is applied to the current value of the atom, yielding a new value, and the new value is stored in the atom.
+
+Note that swap! returns the new value:
+
+
+
+
+
+
+
+
+
+(swap! my-number-atom inc)
+
+;; => 3
+
+  
+
+(swap! my-number-atom dec)
+
+;; => 2
+ 
+
+
+Supplying Additional Arguments to the Data Function
+
+We can supply additional arguments to the data function:
+
+
+
+
+
+
+
+
+
+(swap! my-number-atom + 10)
+
+;; does this: (+ 2 10)
+
+  
+
+@my-number-atom
+
+;; => 12
+
+  
+
+(swap! my-number-atom + 1 2 3 4 5)
+
+;; does this: (+ 12 1 2 3 4 5)
+
+  
+
+@my-number-atom
+
+;; => 27
+ 
+
+
+Storing Maps in Atoms
+
+The previous examples have been about storing integers in atoms, but we can store any value in an atom.
+
+When we have maps in atoms, we use functions like assoc, assoc-in, update and update-in for the data function.
+
+Here are some examples, with a map that describes the film Jaws.
+
+
+
+
+
+
+
+
+
+(def jaws-atom (atom {:title "Paws"
+
+                      :director {:name "Karl Zwicky"
+
+                                 :n-movies-as-director 40}
+
+                      :n-likes 0}))
+ 
+
+
+Whoops; that's Paws, not Jaws.
+
+Let's fix the title using assoc:
+
+
+
+
+
+
+
+
+
+;; Do this: (assoc <current-value> :title "Jaws"):
+
+  
+
+(do (swap! jaws-atom assoc :title "Jaws")
+
+    (fact @jaws-atom => {:title "Jaws"
+
+                         :director {:name "Karl Zwicky"
+
+                                    :n-movies-as-director 40}
+
+                         :n-likes 0})) 
+ 
+
+
+And let's fix the director's name using assoc-in:
+
+
+
+
+
+
+
+
+
+;; Do this: (assoc-in <current-value> [:director :name] "Steven Spielberg"):
+
+  
+
+(do (swap! jaws-atom assoc-in [:director :name] "Steven Spielberg")
+
+    (fact @jaws-atom => {:title "Jaws"
+
+                         :director {:name "Steven Spielberg"
+
+                                    :n-movies-as-director 40}
+
+                         :n-likes 0}))
+ 
+
+
+We can add more detail to the director using assoc-in:
+
+
+
+
+
+
+
+
+
+(do (swap! jaws-atom assoc-in [:director :date-of-birth] 1946)
+
+    (fact @jaws-atom => {:title "Jaws"
+
+                         :director {:name "Steven Spielberg"
+
+                                    :n-movies-as-director 40
+
+                                    :date-of-birth 1946}
+
+                         :n-likes 0}))
+ 
+
+
+We can apply a function to part of a map in an atom using update:
+
+
+
+
+
+
+
+
+
+(do (swap! jaws-atom update :n-likes + 2)
+
+    (fact @jaws-atom => {:title "Jaws"
+
+                         :director {:name "Steven Spielberg"
+
+                                    :n-movies-as-director 40
+
+                                    :date-of-birth 1946}
+
+                         :n-likes 2})) 
+ 
+
+
+And, finally, we can apply a function to part of a nested map in an atom using update-in:
+
+
+
+
+
+
+
+
+
+(do (swap! jaws-atom update-in [:director :n-movies-as-director] + 15)
+
+    (fact @jaws-atom => {:title "Jaws"
+
+                         :director {:name "Steven Spielberg"
+
+                                    :date-of-birth 1946
+
+                                    :n-movies-as-director 55}
+
+                         :n-likes 2}))
+ 
+
+
+Lower-Level Operators for Atoms
+
+Clojure provides two lower-level operators that work on atoms:
+•compare-and-set! sets the value, but only if the current value is the same as a supplied old value.
+•reset! sets the value without regard for the current value.
+
+Atoms and Concurrency
+
+Clojure's reference types each have different concurrency semantics. A high-level summary for atoms is that they do not block and that swap! retries if necessary.
+
+In more detail, when a data function returns the new value:
+•If the current value of the atom is the same as the value when the function started:•(this means that this data function did its work based on the current value)
+•swap! replaces the value of the atom with the new value
+•swap! returns the new value
+
+•otherwise:•(this means that the atom was updated by something else)
+•swap! retries running the data function (using the current value as input to the data function).
+
+
+The fact that swap! retries means that the data function should not have side effects.
+
+An Illustration of Multiple Threads Competing to Update an Atom
+
+The code below creates multiple threads that compete to update an atom using a long-running data function. There are n-competitors threads, the atom being updated is competing-updates-atom, and the long-running data function is long-running-inc.
+
+This causes multiple data functions to run concurrently, which in turn causes conflicting update attempts, so there are lots of retries.
+
+Another atom, n-attempts-atom, is used to keep track of the number of update attempts.
+
+Every so often, the report-on-what-is-happening function prints a vector whose first element is the number of succesful increments and whose second element is the number of attempts.
+
+On completion, the number of successful increments is equal to n-competitors, but the number of attempts is far greater.
+
+
+
+
+
+
+
+
+
+(def competing-updates-atom (atom 0))
+
+  
+
+(def n-competitors 1000)
+
+  
+
+(defn demo-competition-to-modify-atom []
+
+  (let [n-attempts-atom (atom 0)]
+
+    (letfn [(get-info []
+
+              [@competing-updates-atom
+
+               @n-attempts-atom])
+
+            (long-running-inc [n]
+
+              ;; Note that the following `swap!` is within another `swap!`'s
+
+              ;; data function, which violates the rule that data functions
+
+              ;; should not have side effects.
+
+              ;; But that's OK for keeping count of attempts.
+
+              (swap! n-attempts-atom inc)
+
+              ;; Be long-running:
+
+              (Thread/sleep (rand-int 100))
+
+              ;; The "real" functionality:
+
+              (inc n))
+
+            (long-running-inc-on-atom! []
+
+              (swap! competing-updates-atom long-running-inc))
+
+            (create-competing-threads []
+
+              (dotimes [_ n-competitors]
+
+                (.start (Thread. long-running-inc-on-atom!))))
+
+            (report-on-what-is-happening []
+
+              (while (< @competing-updates-atom
+
+                        n-competitors)
+
+                (Thread/sleep 1000)
+
+                (println "[value n-attempts] =" (get-info))))]
+
+      (create-competing-threads)
+
+      (report-on-what-is-happening)
+
+      (get-info))))
+
+  
+
+(demo-competition-to-modify-atom)
+
+;; [value n-attempts] = [394 16635]
+
+;; [value n-attempts] = [674 25681]
+
+;; [value n-attempts] = [864 29988]
+
+;; [value n-attempts] = [961 31555]
+
+;; [value n-attempts] = [1000 31830]
+
+;; => [1000 31830]
+ 
+
+
+Refs in Brief
+
+Refs allow multiple threads to update multiple identities in a coordinated way. They have the following characteristics:
+•they are shared between threads
+•they are synchronous (if you perform an operation on a ref, you wait for it to complete)
+•they are coordinated (updating applies to a multiple refs at a time)
+•updates can fail and are retryable
+
+So, refs are like atoms except that refs are coordinated.
+
+We create refs using ref:
+
+
+
+
+
+
+
+
+
+(def bank-account-1-ref (ref 100))
+
+(def bank-account-2-ref (ref 200))
+ 
+
+
+We update refs by calling alter within calls of the dosync macro:
+
+
+
+
+
+
+
+
+
+(let [amount 20]
+
+  (dosync
+
+   (alter bank-account-1-ref + amount)
+
+   (alter bank-account-2-ref - amount))
+
+  [@bank-account-1-ref
+
+   @bank-account-2-ref])
+
+;; => [120 180]
+ 
+
+
+Refs vs Atoms
+
+For our bank account example we could use a single atom instead of two refs:
+
+
+
+
+
+
+
+
+
+(def bank-accounts-atom
+
+  (atom {:account-1 100
+
+         :account-2 200}))
+
+  
+
+(let [amount 20]
+
+  (swap! bank-accounts-atom (fn [m]
+
+                              (-> m
+
+                                  (update :account-1 + amount)
+
+                                  (update :account-2 - amount)))))
+
+;; => {:account-1 120
+
+;;     :account-2 180}
+ 
+
+
+So, how do we choose between atoms and refs?
+
+The short answer is to use atoms if they are good enough; things are simpler with atoms because state is less spread out. Almost all Clojure code I have seen uses atoms rather than refs.
+
+A longer answer (from the book Seven Concurrency Models in Seven Weeks) is:
+•Consider style and personal preference — use whatever seems clearer
+•Consider performance — test the alternatives to see how they perform
+•Atoms suffice for most problems
+•Use the simplest approach that works.
+
+Wrap-Up
+
+We've taken a look at state in Clojure, focussing on atoms and looking briefly at refs. We've taken a fairly complete look at atoms, including an illustration of how atoms deal with concurrency.
+
+We've briefly looked at the question of when to use refs and when to use atoms.
+
+Shortcuts
+'(...) == (list ...)
+
+  [ ... ] == (vector ...)
+
+\{ ... \} == (map ..)
+
+#{ ... } == (set ...)
+
+Functions
+
+(let \[x 1,  y 2 z 3]) - to assign variables
+
+(butlast x) returns all but last of a sequence
+
+(nth seq, idx) return item from seq at position idx
+
+(if (test) (then) (else))
+
+(recur ()) calls recursively e.g (fn [ x y] (recur (error) (thumbs up)))
+
+#(reduce (fn [x y] (inc x)) 0 %1) will count a list
+
+Calling nested functions: http://blog.japila.pl/2012/03/anonymous-functions-inside-other-function-definitions-for-clojure-and-monads-nirvana/
+
+Collections
+
+Map
+
+(get \{ :x 1 :y 2 :z 3} :x) to return :x
+
+(contains? \{ :x 1 :y 2 :z 3} :x) to look for :x
+
+(count \{ :x 1 :y 2 :z 3}) length of map
+
+(zipmap \[ :a :b] \[0 1]) to build map from two lists

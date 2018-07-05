@@ -1,0 +1,71 @@
+JDBC 4.2, which is part of Java SE 8, introduces the following features:
+
+Addition of REF_CURSOR support.
+Addition of java.sql.DriverAction Interface
+Addition of the java.sql.SQLType Interface
+Addition of the java.sql.JDBCType Enum
+Add Support for large update counts
+Changes to the existing interfaces
+Rowset 1.2: Lists the enhancements for JDBC RowSet.
+Addition of REF_CURSOR Support
+The REF_CURSOR data type is supported by several databases. To return a REF_CURSOR from a stored procedure, use the method CallableStatement.registerOutParameter and specify Types.REF_CURSOR as the data type to be returned. To retrieve the ResultSet instance representing the REF_CURSOR, invoke the method the method CallablStatement.getObject, and specify ResultSet as the data type to which to convert the returned object. The returned result set is a forward, read-only result set.
+
+If you invoke the method registerOutParameter and specify Types.REF_CURSOR as the data type to be returned, and the JDBC driver does not support this data type, a SQLFeatureNotSupportedException is thrown.
+
+The following example obtains a ResultSet instance from a REF_CURSOR with the CallableStatement class:
+
+CallableStatement cstmt = conn.prepareCall("{callmySproc(?)}");
+cstmt.registerOutParameter(1, Types.REF_CURSOR);
+cstmt.executeQuery();
+ResultSet rs = cstmt.getObject(1, ResultSet.class);
+while(rs.next()){
+System.out.println("Name="+ rs.getString(1));
+}
+To determine if a JDBC Driver supports REF_CURSOR, invoke the method DatabaseMetaData.supportsRefCursors.
+
+Addition of the java.sql.DriverAction Interface
+This is an interface that any class that implements the java.sql.Driver must implement if it wants to be notified by the DriverManager class. The JDBC driver's static initialization block must invoke the method DriverManager.registerDriver(java.sql.Driver, java.sql.DriverAction) to inform DriverManager class of which DriverAction implementation to invoke when the JDBC driver is deregistered. The method DriverManager.deregisterDriver requires a permission, if a SecurityManager is enabled.
+
+Addition of the java.sql.SQLType Interface
+This interface is used to create an object that identifies a generic SQL type, called JDBC type or a vendor specific data type.
+
+Addition of the java.sql.JDBCType Enum
+This enum identifies generic SQL Types, called JDBC Types. Use JDBCType in place of the constants defined in Types.java.
+
+Add support for large update counts
+JDBC methods returned only int value for the update count. As datasets continue to grow, this caused problems. Thus methods have been added to the Statement class that return a long value for the update count. These methods should be used when the returned row count exceeds the constant Integer.MAX_VALUE.
+
+Changes to the existing interfaces
+Methods have been added to or clarified for the following interfaces. The following is the list of enhanced interfaces:
+
+java.sql.Driver
+java.sql.DriverManager
+java.sql.DatabaseMetaData
+java.sql.Date
+java.sql.Time
+java.sql.TimeStamp
+java.sql.Statement
+java.sql.CallableStatement
+java.sql.PreparedStatement
+java.sql.ResultSet
+java.sql.SQLInput
+java.sql.SQLOutput
+java.sql.Types
+javax.sql.DataSource and javax.sql.XADataSource
+java.sql.SQLXML
+RowSets 1.2: Lists the enhancements JDBC RowSet.
+The following lists the interfaces and classes enhanced or clarified for RowSet1.2:
+
+javax.sql.rowset.BaseRowSet
+javax.sql.rowset.CachedRowSet
+javax.sql.rowset.Predicate
+javax.sql.rowset.JdbcRowSet
+javax.sql.rowset.RowSetMetaDataImpl
+javax.sql.rowset.spi.SyncFactory
+javax.sql.rowset.serial.SerialArray
+javax.sql.rowset.serial.SerialBlob
+javax.sql.rowset.serial.SerialClob
+javax.sql.rowset.serial.SerialDatalink
+javax.sql.rowset.serial.SerialJavaObject
+javax.sql.rowset.serial.SerialRef
+javax.sql.rowset.serial.SerialStruct

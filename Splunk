@@ -1,0 +1,281 @@
+Search and Reporting Training Course Notes 
+
+Contents
+
+•Contents
+•Introduction
+•Section 1: Search Fundamentals
+•Section 2: Getting Statistics
+•Section 3: Analyzing, Calculating and Formatting
+•Section 4: Creating Charts
+•Section 5: Correlating Events
+•Section 6: Lookups
+•Section 7: Report Acceleration
+•Section 8: Macros
+
+Introduction
+
+This is a slightly more advanced training source. The Using Splunk Training Course Notes should be taken first.
+
+Trainer: Mike Tinney
+
+Regex links:
+
+
+
+
+Link 
+
+
+http://www.splunk.com/base/Documentation/4.3.2/SearchReference/Regex 
+http://www.regexbuilder.org/ 
+http://xenon.stanford.edu/~xusch/regexp/analyzer.html 
+http://www.regular-expressions.info/books.html 
+
+Other useful links:
+
+
+
+
+Link 
+
+
+http://docs.splunk.com/Documentation/Splunk/5.0.1/Knowledge/UnderstandandusetheCommonInformationModel 
+http://docs.splunk.com/Documentation/Splunk/5.0.1/Search/UsingtheSearchJobInspector#What_the_job_inspector_shows_you 
+
+Take a look at the following splunk app: DBX (Splunk DB Connect app). It can be used for looking up data in a database.
+
+Section 1: Search Fundamentals
+•Auto-field extraction will create a field if the data for the field is present in more than 50% of the events for same source type (will look for = and : in raw data). Only happens at search time - data in data store is not modified.
+•Comparison operators: =, !=, <, <=, <=, >=, >
+•AND boolean operator is implied if no operator is specified.
+•Boolean operators must be in uppercase.
+•Searches are in case insensitive to data.
+•Use regex command for case sensitive searches.
+•Give splunk as much data as possible in search bar - makes splunk more efficient.
+•Cut down on the number of matching events as soon as possible. Makes splunk faster.
+•Best way of cutting down on the number of events that match is to use the timer picker to reduce the timespan being searched.
+•When you first login to splunk change the time picker to something other than "All time" as this is very in-efficient!
+•Inclusion of fields is better than exclusion - quicker. Searching for "access denied" is faster than NOT "access granted".
+•Powerful ways of filtering data: sourcetype, source, host, index
+•If you use NOT, then != is more efficient.
+•Search: ... | stats sum(price) as lost_revenue
+Sums the price field in the events and creates a new field called lost_revenue and displays it in a table with a single row.
+•Search: ... | top user | fields - percent
+Creates a table with 10 rows with the first column being user and the second being count. The latter contains the count of the number of events for each user. The table is sorted in descending values of count. The fields command removes the percent field from the data being displayed (it would be another column). There must be a space between the - after the fields command and the name of the column.
+The fields command can improve the performance of searches. Use fields + <field name> to include a field. Only the fields you specify are extracted. For efficiency use fields + near start of search after filtering.
+•System variables:•_raw - original data.
+•_time - timestamp in UNIX.
+
+•field names are case sensitive.
+•IFX - Interactive Field Extractor. This is started by clicking on the drop down list (triangle) to the left of the event in question and selecting "Extract Fields".
+•In a regex, if you see "?P" this means Python regex rather than the default PCRE.
+•With regex command you can "operate" on an existing field:
+{{... | rex field=cs_username "(?<firstName>\w+)@"
+This will extract the first name from the field cs_username and store it in a new field called firstName.
+•Search:... | rex "\s+TraderID:(?<TraderID>.*)$"
+
+This will extract the TraderID value from the event and create a new field called TraderID to put it in.
+
+•ERex - combines IFX and rex.
+Search: ... | rex monthday examples="7/01,07/02" counterexamples="99/2"
+Creates monthday field.
+•multikv - extracts fields from tabular data.
+
+Section 2: Getting Statistics
+•Commands: top, rare, stats
+•sourcetype=... | top limit=5 clientip
+Shows top 5 clientip's which occur most in the events. The limit can go last: sourcetype=... | top clientip limit=5. To get all clientips set limit to 0.
+•top creates a field called count and percent which can be used later on in the same search.
+•... | top s_hostname by usage adds an extra field called usage and adds it as the first column.
+•sorting: ... | sort -count sorts the results in descending (decrementing) high->low order.
+
+
+ 
+
+
+
+
+
+ Best Practice
+Build searches gradually. Don't try and write a complex search in a single go. 
+
+ 
+•stats command:
+stats <command>
+      count               - returns no. of events that match search
+      distinct_count, dc  - returns a count of unique values for a given field
+      sum                 - returns a sum of numeric values
+      avg                 
+      list                - lists all values of a given field
+      values              - list unique values
+
+•... | stats count by productId
+•... | stats count(s_hostname) by usage - count how many times a URL appears in events and group by usage.
+•... | stats count(s_hostname) as Total by usage - as above but rename s_hostname event to Total.
+•... | stats dc(s_hostname) - how many unique URLs exist in the events.
+•... | stats sum(sc_bytes) as bandwidth by s_hostname| sort -bandwidth - sum the number of bytes by URL and rename event as bandwidth. Sort in descending order.
+•... | stats avg(sc_bytes) as avg_bandwidth by usage | sort avg_bandwidth - average number of bytes for each usage in ascending order.
+•sourcetype=access_* action=remove | stats count by productId | addcoltotals - creates a new row at bottom of output with sum of each column.
+
+
+ 
+
+
+
+
+
+ Possibility
+Could may be use the stats perl script log file fed into splunk and calc the total memory size of each process: resident + virtual and create a new field. Could then plot 5 largest say on a graph and alert if memory gets too high? /opt/psuown/datalocal/process_stats/stats-gbl01056-*.log 
+
+ 
+•| stats list(s_hostname) by cs_username - outputs all values of s_hostname (URLs). Could contain duplicates as returns values from field s_hostname that match search.
+•use values command instead: | stats values(s_hostname) by cs_username
+•sparkline is useful for looing at trends without having to create a normal graph.
+| stats sparkline count by productId | sort -count - creates a sparkline for the count.
+
+Section 3: Analyzing, Calculating and Formatting
+•eval - allows us to calculate and manipulate field values. Results are written to a specified field.
+•| stats sum(sc_bytes) as bytes by usage | eval MB = bytes/1024/1024 - create a new field called MB which has the number of MegaBytes.
+•| stats sum(sc_bytes) as bytes by usage | eval MB = round(bytes/1024/1024, 2) - as above but round the MB field to 2 decimal places.
+
+
+ 
+
+
+
+
+
+ Best Practice
+<field name>=* - ensures that only events which have this field and it has a value will be returned. e.g. : sourcetype=access* action=* 
+
+ 
+•| stats sum(price) as lost_revenue = "$" + tostring( lost_revenue, "commas) - overwrite lost_revenue field with dollar symbol pre-pended to lost_revenue and adds commas to it (and rounds to 2 decimal places if necessary).
+•if a field is numeric and you use fieldformat and tostring to overwrite it, it is still of type numeric in splunk!
+•rangemap command adds new field called range which has a value of "low", "elevated" or "severe".
+•| eval usage = if(usage == "Business", "Business Usage", "Other") - field usage will be replaced by "Business Usage" if it contained the value "Business" otherwise "Other". There must be double quotes around the values within the if statement.
+
+
+ 
+
+
+
+
+
+ Best Practice
+When creating a search for a dashboard, put DB at the end of it's name so that you know that it will be used in one or more dashboards. 
+
+ 
+
+Section 4: Creating Charts
+
+
+ 
+
+
+
+
+
+ Demo
+Demo of using bucket command.
+... action=remove | bucket _time span=1h | stats sum(price) as lostSales by _time - return events in hourly grouped "buckets". 
+
+ 
+•... | chart avg(bytes) over host by date_wday - create a chart with xaxis of host split by each value of date_wday.
+•If you get NULLs in graph, drill down on them to found out why (click on line representing NULL data).
+•Or remove NULLs: ... | chart count over product_name by host usenull=false
+•yaxis should always be numeric for chart.
+•If there are more than 10 items categories, then splunk will create an OTHER category to hold data for extra categories beyond the default 10. You can override the 10 limit by using the limit: ... | chart ... limit=20. Or use useother=f: ... | chart ... useother=f.
+•Use timechart command when asked a question which involves increments of time - time is always on xaxis (i.e. _time).
+•sourcetype=cisco_w* usage=Violation | timechart count(usage)
+•all stats functions can be used with chart and timechart
+•sourcetype=access_* action=purchase | timechart sum(price) by product_name
+•To cope with missing data, you have three options (click on Formatting Options to see them): Omit (default), Connect and Treat as Zero (recommended).
+
+
+ 
+
+
+
+
+
+ Hint
+xyseries is useful command when graphing data. 
+
+ 
+
+Section 5: Correlating Events
+•use transactions when you need to see events correlated together - i.e. why is one "end" event erroring? What is happening with related preceding events?
+•having a field name naming convention (consistency of naming of fields) is very important for transactions. i.e. same field name for different event types (i.e. not tradeId and TradeID).
+•transaction - is any group of conceptually related events that span time.
+•transaction command - create a new event when certain fields in related events have the same value. The new event groups the related events. You can specify a max time span to limit the time to search for events that are related to each other.
+•the transaction command does a lot of work "behing the scenes" and is resource intensive - but it is worth it!
+•maxpause - the max time between events within a transaction.
+•the transaction commands creates 2 new fields in the resulting transaction events:•duration = different in _time between last and first event.
+•eventcount = how many events make up the transaction. This helps find possible problems if a few transaction contain a lot less events than expected.
+
+•... | transaction tradeid, ticker maxspan=1m | fields tradeid, duration | bucket duration bins=8 | stats count(_raw) by duration - specify pie chart. Useful search - will highlight if some transactions are taking longer than expected.
+•... | transaction clientip startswith=eval(action="addtocart") endswith=eval(action="purchase") - don't need maxspan as we specify how to find start and end events of the transaction.
+
+Section 6: Lookups
+•lookups are for static data.
+•lookups add more fields to events.
+•There are 2 types of looks ups:•File - covered in this course.
+•Scripted - write a script to look up values from a DB (or perhaps coherence cluster?).
+
+•Configuration is under Splunk->Manager->Lookups.
+•| inputlookup <Lookup Knowledge Object name> - will show you contents of lookup file.
+•sourcetype=access_* | lookup product_lookup productid OUTPUT product_name, price | stats sum(price) by product_name - will use the product_lookup lookup. The input field is called productid and the output fields follow the text OUTPUT. The latter fields will appear in the events and can be referenced from the remaining part of the search.
+•The above lookups are manual - you must specify them in the search.
+•Automatic lookups will be automatically be run by splunk and populate the output fields in all events that match.•needs a separate automatic lookup knowledge object name.
+•restricted to a single sourcetype.
+
+
+
+ 
+
+
+
+
+
+ Best Practice
+prepend "auto_" to the name of the manual lookup to create the name of the corresponding automatic lookup. 
+
+ 
+•Workflow Actions - set up interactions with external systems. E.g. if an event contains a clientip you can configure a workflow action so that for a specify event, a user can select a "Whois DNS lookup" from the events' Event menu.
+
+Section 7: Report Acceleration
+•splunk 5 feature
+•easier to set up than summary indexes but not necessarily a replacement for it.
+•summary indexes can also keep data for a long period of time.
+•with report acceleration, splunk creates an acceleration summary (which can be thought of as a cache)
+•search mode must be Smart of Fast.
+•by default only power users can accelerate reports (you can add schedule_search privilege to your user role to allow all users to make use of summary acceleration).
+•acceleration summaries are public even if the search(s) using them are private!
+•for a search to be accelerated it must contain a reporting command (a search with the transaction command will not be accelerated!).
+•Under the Searches & Reports menu - if a report has a green blob then it is private. If it has a thunderbolt then it is an accelerated report.
+•A search will only be accelerated if it would return more than 100,000 events.
+•Information about accelerated reports can be found under Manager->Report Acceleration.•Shows Summarization Load - the load on splunk creating the acceleration summary.
+•Pending - means the summary has not been created yet.
+
+
+Section 8: Macros
+•you can "reuse" portions of a search in multiple places.
+
+
+ 
+
+
+
+
+
+ Hint
+Maybe useful for CSRs. If CSRs want to search for transactions received from a certain client, then a macro could be created which requires the client name to be passed in. 
+
+ 
+•Manager->Advanced Search->Search macros
+•`email` | chart count by mailto - back ticks must surround the macro and any arguments.
+•`performance(www4)`
+•`performance(host=www4,action=purchase)` - you don't need the parameter names.
+•`performance(www4,purchase)`
+•Use Jobs to check that the macro is expanding as expected. Click on the Inspect Action. You can also use the JobInspector icon (the icon with "i" near the top right).

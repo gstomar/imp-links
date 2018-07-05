@@ -1,0 +1,431 @@
+ Table of Contents
+Java Platform Module System
+Language Changes
+Private Interface Methods
+Try-With-Resources on Effectively Final Variables
+Diamond Operator for Anonymous Classes
+SafeVarargs on Private Methods
+No More Deprecation Warnings for Imports
+APIs
+OS Processes
+Multi-Resolution Images
+Stack Walking
+Redirected Platform Logging
+Reactive Streams
+Collection Factory Methods
+Native Desktop Integration
+Deserialization Filter
+Networking
+XML
+Extensions to Existing APIs
+Low Level APIs
+Variable Handles Aka VarHandles
+Enhanced Method Handles
+Dynalink
+Nashorn Parser API
+Spin-Wait Hints
+APIs That Go Bye Bye
+But Wait, There Is More!
+Comments
+Java 9 is coming! It’s just six more months until the scheduled release and besides the module system, it brings a couple of new language features and many new and improved APIs. We need to have a look at all the shiny new things we get to play with, so here it is, the ultimate guide to Java 9. (Btw, you can find some of the snippets in this article on GitHub.)
+
+Java Platform Module System
+First, let’s kick the biggest elephant out of the room: The Java Platform Module System (JPMS) is undoubtedly Java 9’s flagship feature and much has been written about it: in the grandiose State of the Module System, on this site when we summarized the JVMLS, on my blog, on other blogs, heck, even Wikipedia has an article – useless but still.
+
+With all of these sources we don’t have to repeat anything here – so we won’t. Instead, let’s move on to less known features. And there are so many of them!
+
+Language Changes
+When Sun was low on cash, Java 7 only brought some small changes to the language. In an act of sarcastic humor, the project that contained them was dubbed Project Coin. For Java 9 JEP 213: Milling Project Coin refines these and other details.
+
+Private Interface Methods
+Java 8 brought default methods to the table, so that interfaces could be evolved. This went pretty well but there was one unfortunate detail: Reusing code between default methods was unpleasant.
+
+Extracted methods either had to be default methods, which had to be public, or go into some helper class to keep them private:
+
+public interface InJava8 {
+
+    default boolean evenSum(int... numbers) {
+        return sum(numbers) % 2 == 0;
+    }
+
+    default boolean oddSum(int... numbers) {
+        return sum(numbers) % 2 == 1;
+    }
+
+    // we don't want this to be public;
+    // but how else do we resuse?
+    default int sum(int[] numbers) {
+        return IntStream.of(numbers).sum();
+    }
+
+}
+In Java 9 we can simply have a private interface method:
+
+public interface InJava9 {
+
+    // as above
+
+    private int sum(int[] numbers) {
+        return IntStream.of(numbers).sum();
+    }
+
+}
+Neat, hm?
+
+Try-With-Resources on Effectively Final Variables
+Have you ever done something like this?
+
+void doSomethingWith(Connection connection) throws Exception {
+    try(Connection c = connection) {
+        c.doSomething();
+    }
+}
+The variable c is just there because the try-with-resources statement’s syntax required it – the managed resources had to be declared in the statement’s head. Java 9 relaxes this: It is now possible to have any resource managed as long as it is effectively final .
+
+So in Java 9 we can use connection directly:
+
+void doSomethingWith(Connection connection) throws Exception {
+    try(connection) {
+        connection.doSomething();
+    }
+}
+Diamond Operator for Anonymous Classes
+Say we have a simple class Box<T> and at one point we want to make an anonymous subclass of it. In Java 8 we had to do it like this:
+
+<T> Box<T> createBox(T content) {
+    // we have to put the `T` here :(
+    return new Box<T>(content) { };
+}
+Isn’t it obvious that it should be a box of T? I mean, the compiler can infer the type if we were not creating an anonymous subclass, so why can’t it do the same here?
+
+The reason are non-denotable types – types that the compiler understands but the JVM doesn’t. In cases like this the compiler might infer a non-denotable type but wouldn’t know how to express it for the JVM. So the diamond operator was roundly rejected for anonymous classes.
+
+Java 9 relaxes this and allows the diamond if a denotable type is inferred:
+
+class inJava {
+
+    <T> Box<T> createBox(T content) {
+        // Java 9 can infer `T` because it is a denotable type
+        return new Box<>(content) { };
+    }
+
+    Box<?> createCrazyBox(Object content) {
+        List<?> innerList = Arrays.asList(content);
+        // we can't do the following because the inferred type is non-denotable:
+        // return new Box<>(innerList) { };
+        // instead we have to denote the type we want:
+        return new Box<List<?>>(innerList) { };
+    }
+
+}
+SafeVarargs on Private Methods
+Do you know about @SafeVarargs? You can use it to tell the compiler that your special mixture of varargs and generics is safe. (If you’re asking yourself, why it wouldn’t be safe, check out this great Q&A on StackOverflow.) A typical use looks like this:
+
+@SafeVarargs
+public static <T> Optional<T> first(T... args) {
+    if (args.length == 0)
+        return Optional.empty();
+    else
+        return Optional.of(args[0]);
+}
+@SafeVarargs can only be applied to methods which cannot be overridden (reason). This obviously includes static, final, and private methods as well as constructors. Or does it? For no apparent reason private, non-final methods could not be annotated before and Java 9 fixes that. One annoyance less.
+
+No More Deprecation Warnings for Imports
+If you maintain an old project but are keen on having a warning-free build, you might have come up against the vexing fact that imports of deprecated types cause warnings.
+
+The following class does everything right: While it uses a deprecated type, it is deprecated itself so it looks like there is no reason to get a warning.
+
+import java.io.LineNumberInputStream;
+
+@Deprecated
+public class DeprecatedImports {
+
+    LineNumberInputStream stream;
+
+}
+But in Java 8 we do! WTF?! Ok, @SuppressWarnings("deprecation") to the rescue! Alas, imports can not be annotated and annotating the stream declaration does not help either. Sad panda.
+
+Again, a little thoughtful tweak is all it takes for Java 9 to shine: Importing a deprecated type no longer causes warnings, so the class above is warning-free.
+
+APIs
+I have to admit, compared to default methods and lambda expressions in Java 8 the new language features are a little unremarkable. But the same is not true for API improvements! There have been a number of thoughtful and interesting additions to the JDK, which you should know about.
+
+OS Processes
+The Process API got extended by JEP 102 and now sports features for a richer interaction with system level processes. The new ProcessBuilder makes it much more convenient to build processes and even pipelines.
+
+Want to call ls, pipe the results into grep? No problem:
+
+ProcessBuilder ls = new ProcessBuilder()
+        .command("ls")
+        .directory(Paths.get("/home/nipa/tmp").toFile());
+ProcessBuilder grepPdf = new ProcessBuilder()
+        .command("grep", "pdf")
+        .redirectOutput(Redirect.INHERIT);
+List<Process> lsThenGrep = ProcessBuilder
+        .startPipeline(asList(ls, grepPdf));
+The equally new ProcessHandle makes it much more convenient to interact with processes and process trees.
+Process implements it all but in name because a couple of return types do not match up. To get a proper handle call Process::toHandle.
+
+Want to wait for each of the two processes until they’re finished before writing their PID to the console? Here you go:
+
+CompletableFuture[] lsThenGrepFutures = lsThenGrep.stream()
+        // onExit returns a CompletableFuture<Process>
+        .map(Process::onExit)
+        .map(processFuture -> processFuture.thenAccept(
+                process -> System.out.println("PID: " + process.getPid())))
+        .toArray(CompletableFuture[]::new);
+// wait until all processes are finished
+CompletableFuture
+        .allOf(lsThenGrepFutures)
+        .join();
+For more check out Steffen Jacobs’ post about the extended process API.
+
+Java 9 - as hip as Shibuya
+Published by Guwashi under CC-BY 2.0
+
+Multi-Resolution Images
+JEP 251 introduces MultiResolutionImage, which encapsulates a set of images with different resolutions and allows to query it with a desired height and width. An abstract and a simple implementation are provided.
+
+public static void main(String[] args) throws IOException {
+    MultiResolutionImage tokio = loadTokio();
+    int desiredImageWidth = new Random().nextInt(1500);
+    Image variant = tokio.getResolutionVariant(desiredImageWidth, 1);
+
+    System.out.printf("Width of image for %d: %d%n",
+            desiredImageWidth, variant.getWidth(null));
+}
+
+private static MultiResolutionImage loadTokio() throws IOException {
+    List<Image> tokios = new ArrayList<>();
+    for (String url : IMAGE_URLS) {
+        tokios.add(ImageIO.read(new URL(url)));
+    }
+    return new BaseMultiResolutionImage(tokios.toArray(new Image[0]));
+}
+Stack Walking
+To enable walking the stack without creating a full (and hence expensive) snapshot JEP 259 introduces the StackWalker. Supported by improved JVM capabilities, it creates a stream of stack frames that will be lazily evaluated as needed. This allows us to leverage the Stream API’s power for filtering and mapping while at the same time making short walks perform better.
+
+Here we make a couple of calls and then walk the stack until we find the frame that belongs to a specific method:
+
+public static void main(String[] args) { one(); }
+
+static void one() { two(); }
+
+static void two() { three(); }
+
+static void three() {
+    String line = StackWalker.getInstance().walk(StackWalking::walk);
+    System.out.println(line);
+}
+
+private static String walk(Stream<StackFrame> stackFrameStream) {
+    return stackFrameStream
+            .filter(frame -> frame.getMethodName().contains("one"))
+            .findFirst()
+            .map(frame -> "Line " + frame.getLineNumber())
+            .orElse("Unknown line");
+}
+StackWalker::walk takes a function from Stream<StackFrame> to the desired result. This is a little unusual, why does it not simply return the stream? Citing the JEP:
+
+Returning a stream holding a stack pointer for further manipulation in an uncontrolled manner will not work since, as soon as the stream factory returns, the JVM will be free to reorganize the control stack (via deoptimization, for example).
+Instead StackWalker::walk creates the stream, passes it to the function we passed, and closes it once our function returns. So we can not store the stream for later processing either.
+
+Redirected Platform Logging
+Were you ever frustrated by the fact that the JDK classes use their own logging infrastructure? Wouldn’t it be cool to pipe those messages into the logging backend used by the application? If so, then lucky you because that’s exactly what JEP 264 implemented.
+
+The JDK classes now pipe messages through the new interface Logger (either directly or on a detour through sun.util.logging.PlatformLogger) – instances of which are provided by a single LoggerFinder. The finder in turn – and that’s the interesting bit – is located using the Service Loader API. This enables logging backends like Log4J or Logback to provide a finder that creates loggers which forward messages into the backend.
+
+It’s straight forward to set everything up – check the demo.
+
+Reactive Streams
+Reactive principles are on the rise and many different libraries and frameworks implement them. To improve their interoperability JEP 266 contains a minimal set of interfaces that capture the heart of asynchronous publication and subscription. The hope is that in the future 3rd parties will implement them and thus convene on a shared set of types.
+
+And here they are:
+
+Publisher
+Produces items for subscribers to consume. The only method is subscribe(Subscriber), whose purpose should be obvious.
+Subscriber
+Subscribes to publishers (usually only one) to receive items (via method onNext(T)), error messages (onError(Throwable)), or a signal that no more items are to be expected (onComplete()). Before any of those things happen, though, the publisher calls onSubscription(Subscription).
+Subscription
+The connection between a single publisher and a single subscriber. The subscriber will use it to request more items (request(long)) or to sever the connection (cancel()).
+The flow is as follows:
+
+Create a Publisher and a Subscriber.
+Subscribe the subscriber with Publisher::subscribe.
+The publisher creates a Subscription and calls Subscriber::onSubscription with it so the subscriber can store the subscription.
+At some point the subscriber calls Subscription::request to request a number of items.
+The publisher starts handing items to the subscriber by calling Subscriber::onNext. It will never publish more than the requested number of items.
+The publisher might at some point be depleted or run into trouble and call Subscriber::onComplete or Subscriber::onError, respectively.
+The subscriber might either continue to request more items every now and then or cut the connection by calling Subscription::cancel.
+All of this is pretty straight forward, maybe with the exception of Subscription::request. Why would the subscriber need to do that? This is the implementation of back pressure, a mechanism with which consumers can signal back to producers how many items they can process. Without such a mechanism, producers might easily overwhelm consumers, forcing them to drop items or to have unbounded queues, in which unprocessed items are stored. Neither solution is stable so back pressure was introduced to throttle item production if consumers can not keep up.
+
+Note that the JDK provides only the interfaces and no implementations (with the exception of SubmissionPublisher)! There is also no move towards creating publishers for asynchronous tasks like walking the file system. All of the described interfaces are inner types of the class Flow, which has a good introductory documentation. There is also an official GitHub project, which contains the code and a detailed specification of the API. I created a simple example, which might also clarify what’s going on.
+
+Collection Factory Methods
+Once there was hope for collection literals. Wouldn’t this be great?
+
+List<String> list = [ "a", "b", "c" ];
+Map<String, Integer> map = [ "one" = 1, "two" = 2, "three" = 3 ];
+Well, as great as it might seem, this is non-trivial and there are good reasons not to do it. What’s the next best thing? Factory methods! Thanks to JEP 269 we can do this now:
+
+List<String> list = List.of("a", "b", "c");
+Map<String, Integer> mapImmediate = Map.of(
+        "one", 1,
+        "two", 2,
+        "three", 3);
+Map<String, Integer> mapEntries = Map.ofEntries(
+        entry("one", 1),
+        entry("two", 2),
+        entry("three", 3));
+Not bad either. This will make the creation of ad-hoc collections, especially for static fields, much more convenient. There are a couple of interesting things to note about these collections.
+
+First of all, they are all immutable. That’s right, List.of("a").add("b") fails (with an UnsupportedOperationException). I like it: These factory methods will often be used to initialize fields with a collection of fixed elements, where mutability is in most cases undesired. (If you heard that Java 9 will sport immutable collections, then beware that this is it. The immutability did not make it into the type system.)
+
+The factory methods roundly reject null values. No matter whether as elements, as keys, as values, they are forbidden. Good thing, down with null!
+
+Finally, and this is a little crazy, there’s randomization in play. These collections are implemented to maximize performance and simply store their elements in fields (up to two elements) or fixed-size arrays (for more). This means that their iteration order would always be the same on all machines regardless of hashCode implementations. That would considerably increase the likelihood of some parts of a program’s logic inadvertently depending on this order.
+
+To prevent that, the item’s order is randomized per program run. On each launch a random salt is picked and then used throughout that run to place elements in the array during construction. That makes this process deterministic during a run (so two calls to Set.of("a", "b", "c") will always have the same order) but random across runs.
+
+Native Desktop Integration
+Java desktop applications always stick out like a sore thumb. This is not going to change anytime soon but JEP 272 makes it a little less obvious. Its goal is to “[d]efine a new public API to access platform-specific desktop features such as interacting with a task bar or dock, or listening for system or application events.” On Linux only Unity is supported so I couldn’t give it a try but the code looks promising.
+
+Let’s pick the taskbar as an example. Here are some of the available features:
+
+An application can request attention, which will lead to bouncing or flashing taskbar icons.
+Application-specific menus can be added to the taskbar icon’s context menu.
+The taskbar icon can be changed programmatically.
+Textual or numerical badges can be dynamically added to the taskbar icon.
+Taskbar entries can show progress bars and states like off, paused, or error.
+Window previews can have icon badges.
+(Note that not all platforms support all features. A handy Taskbar::isSupported method allows to check which are available.)
+
+For more have a look at the new package java.awt.desktop.
+
+Deserialization Filter
+Deserialization has been deemed a security problem for quite some time now. JEP 290 aims to improve the situation by allowing us to vet a byte stream before agreeing to deserialize it. The following details are taken into account:
+
+The class of which an instance is to be deserialized.
+The sizes of arrays being created.
+Stream metrics: length, stream depth, and number of references.
+A static filter based on those details can be configured (via command line or property file). It would black- and/or whitelist classes and state limits for any of the numerical properties. Alternatively an ObjectInputFilter can be created, which is called for each serialized instance and can dynamically evaluate the same properties:
+
+interface ObjectInputFilter {
+
+    Status checkInput(Class<?> clazz,
+            long size, long nRefs, long depth, long streamBytes);
+
+    enum Status { UNDECIDED, ALLOWED, REJECTED; }
+}
+Unfortunately the issue is not yet implemented, so we can not play around with.
+
+Networking
+There are a couple of network related technologies that are now supported by the JDK. This is not my strong suit so I’ll leave you with a list of fancy names and links:
+
+HTTP/2 (JEP 110, introduction by Steffen Jacobs)
+Datagram Transport Layer Security (DTLS, JEP 219)
+TLS Application-Layer Protocol Negotiation Extension (TLS ALPN, JEP 244)
+OCSP Stapling for TLS (JEP 244)
+XML
+JEP 268 implements the OASIS XML Catalogs standard v1.1. It defines “catalog and catalog-resolver abstractions which can be used with the JAXP processors that accept resolvers”. Note that “[e]xisting libraries or applications that use the internal API will need to migrate to the new API in order to take advantage of the new features”. You can find it in javax.xml.catalog.
+
+JAXP also got a boost: JEP 255 merged selected changes between Xerces 2.10.0 and 2.11.0 into the JDK.
+
+Extensions to Existing APIs
+Some of the existing APIs got a little love as well. Just to name a few:
+
+Optional, Stream, and Collectors got a few new methods. Here are dedicated posts covering them: for Optional, for Stream, and for Collectors.
+A number of stream returning methods were added, e.g. LocalDate::datesUntil or Scanner::tokens /
+Scanner::findAll.
+Many types of the DateTime API introduced in Java 8 can now transform themselves to epoch seconds, e.g. Chronology , LocalDate , and OffsetTime.
+Duration got a bunch of methods that interpret it as days:hours:minutes:seconds:ms:ns and return the individual parts of that interpretation.
+Matcher gained new methods to replace matches and Matcher::results now returns a Stream<MatchResult>.
+Small details were added to IO: InputStream can now directly transfer to an OutputStream and Buffer can slice and duplicate itself.
+The Atomic... classes got a bunch of new methods that allow memory access with semantics akin to what is now possible with VarHandles. The access (get, set, compareAndSet, and compareAndExchange) can be plain, opaque, acquire, or weak, although not in all combinations.
+Some utility classes where also improved:
+
+Arithmetic methods, e.g. to multiply a long with an int with an exception if an overflow occurs, were added to Math and StrictMath.
+Arrays can now compare arrays and array slices (i.e. a[3]-a[5] and b[2]-b[4]) of all types for equality and, if the types implement Comparable or a Comparator is given, for lexicographical order. Very cool, if something’s amiss, mismatch can return the index where arrays (or slices) divert.
+Objects no longer only has requireNonNull – in a nod to Optional it got requireNonNullElse and requireNonNullElseGet, which do not throw exceptions but instead return a default value if the tested value is null. It also sports a number of methods now that check whether indices are in a desired range.
+Low Level APIs
+Java 9 brings a number of very interesting APIs that operate much closer to the metal (read: the JVM) than what we discussed so far. Let’s have a quick look at them as well – we might learn something entirely new (I surely did).
+
+Variable Handles Aka VarHandles
+I’m out of my depth here, so let me quote from JEP 193:
+
+“As concurrent and parallel programming in Java continue to expand, programmers are increasingly frustrated by not being able to use Java constructs to arrange atomic or ordered operations on the fields of individual classes; for example, atomically incrementing a count field.” The existing possibilities to do this are all lacking in some sense or the other:
+
+Atomic... classes add “both space overhead and additional concurrency issues to manage indirection”
+FieldUpdaters often lead to “more overhead than the operation itself”
+Unsafe is, well, unsafe – it’s neither standardized nor supported and slated to become inaccessible in Java 10.
+Java 9 introduces variable handles about which the JEP writes: “A variable handle is a typed reference to a variable, which supports read and write access to the variable under a variety of access modes. Supported variable kinds include instance fields, static fields and array elements.”
+
+This will remove some of the pressure on Unsafe.
+
+Enhanced Method Handles
+JEP 274 improves the method handle API by providing new combinators for loops, try/finally blocks, and argument handling as well as lookups for interface methods.
+
+Dynalink
+Java 7 brought invokedynamic to the language: A JVM instruction that determines how exactly to execute the invocation dynamically by calling back into the language. (As opposed to the other invoke... instructions, whose behavior is statically defined at compile-time.) It was meant as a tool for more dynamic JVM languages but Java itself started to lean heavily on it. The first major use of “indy” were lambda expressions in Java 8.
+
+During the work on Nashorn, which is a heavy user of invokedynamic, it became prudent to develop a higher-level API on top of it. It expresses operations like “read an object’s property”, “write an object’s property”, “invoke a callable object”, etc. and went by the name Dynalink. Now JEP 276 makes it a public API in Java 9 – you can find it in the package jdk.dynalink.
+
+Nashorn Parser API
+Speaking of Nashorn… Being in charge of everything JavaScript it has a parser (obviously), which lives inside the internal package jdk.nashorn.internal.ir – it was not intended to be used by the public. But tools nonetheless started to depend on it (most prominently IDEs – as usual), which prevents free evolution of the API and becomes a problem with Jigsaw’s strong encapsulation.
+
+To fix all this, JEP 236 creates a supported parser API for Nashorn. You can find it in the package jdk.nashorn.api.tree.
+
+Spin-Wait Hints
+Have you ever written code like this?
+
+class EventHandler {
+    volatile boolean eventNotificationReceived;
+
+    void waitForEventAndHandleIt() {
+        while (!eventNotificationReceived) { /* spinning */ }
+        readAndProcessEvent();
+    }
+
+    void readAndProcessEvent() { /* ... */ }
+}
+Me neither. But some devs are writing low-level stuff and they occasionally need such spin loops. And apparently some hardware platforms can optimize latency and power consumption for spin loops if they know that the code is currently executing one.
+
+And this is where JEP 285 comes in. It declares Thread::onSpinWait, a method whose body is empty, but which HotSpot has an intrinsic implementation for that injects a pause instruction on x86 machines during C2 compilation. You would use it as follows:
+
+void waitForEventAndHandleIt() {
+    while (!eventNotificationReceived) {
+        Thread.onSpinWait()
+    }
+    readAndProcessEvent();
+}
+Now x86 machines will see the spin loop and are able to optimize it.
+
+APIs That Go Bye Bye
+New things come … and sometimes old things have to go. Deprecations have long been a part of Java – as has the fact that nobody really know how to take them. Is the use of a deprecated API merely discouraged or are there serious downsides? Are they supersede by other APIs? Will they be removed?
+
+To make things a little clearer JEP 277 tackles the problem by giving the deprecation annotation two flags: forRemoval and since. Some existing deprecations have been updated to include them. And there are a couple of new deprecations – the most important ones:
+
+The applet API (Java in the browser… remember that thing?) is deprecated but not yet slated for removal. (JEP 289)
+Corba is deprecated. People are heating the fire pits and are expecting to see it burn soon.
+Explicit constructors for primitive wrappers (like new Integer(5) and new Integer ("5")) have been deprecated in favor of factory methods (valueOf or parse...) as these use interning to improve performance.
+Observer and Observable are deprecated. Finally – the API has so many holes it’s a wonder it didn’t sink yet.
+SHA-1 certificates are slowly phased out. (JEP 288)
+If you want to know more about what else got deprecated and how deprecations are handled for compiled code, you should definitely have a look at JEP 277.
+
+And a couple of things are being kicked out of Java for good:
+
+A single underscore (_) is no longer a valid identifier. (JEP 213)
+Certain combinations of garbage collection flags have been deprecated in Java 8 and are being removed now. (JEP 214)
+The hprof tool is being removed because other tools (like JVisualVM) provide the same or superior features. (JEP 240)
+The jhat tool is being removed because better heap visualizers and analyzers are available. (JEP 241)
+But Wait, There Is More!
+Yes, there is more. I know, I know, I promised the ultimate guide and now I leave you hanging? But this post is already long enough, so let’s leave it be and come back for another – maybe already next week. We’ll then take a look at what changed under the hood:
+
+Inside Java 9 – Part I:
+new version schema and GNU-style command line options
+support for technologies like GTK3, SHA-3, Unicode 8.0, and TIFF
+additions to the JVM (like multi-release JARs and unified logging)
+Inside Java 9 – Part II:
+considerable performance improvements, especially thanks to compact strings
+compiler additions (like ahead-of-time compilation) and refactorings (new annotations pipeline)
+JavaDoc improvements

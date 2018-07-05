@@ -1,0 +1,65 @@
+https://stackoverflow.com/questions/28295625/mockito-spy-vs-mock
+
+Stub: Used to make collaborators respond to method calls in a certain way. When stubbing a method, you don’t care if and how many times the method is going to be called; you just want it to return some value, or perform some side effect, whenever it gets called.
+
+subscriber.receive(_) >> "ok" // subscriber is a Stub()
+Mock: Used to describe interactions between the object under specification and its collaborators.
+
+def "should send message to subscriber"() {
+    when:
+        publisher.send("hello")
+
+    then:
+        1 * subscriber.receive("hello") // subscriber is a Mock()
+}
+A Mock can act as a Mock and a Stub:
+
+1 * subscriber.receive("message1") >> "ok" // subscriber is a Mock()
+Spy: Is always based on a real object with original methods that do real things. Can be used like a Stub to change return values of select methods. Can be used like a Mock to describe interactions.
+
+def subscriber = Spy(SubscriberImpl, constructorArgs: ["Fred"])
+
+def "should send message to subscriber"() {
+    when:
+        publisher.send("hello")
+
+    then:
+        1 * subscriber.receive("message1") >> "ok" // subscriber is a Spy(), used as a Mock an Stub
+}
+
+def "should send message to subscriber (actually handle 'receive')"() {
+    when:
+        publisher.send("hello")
+
+    then:
+        1 * subscriber.receive("message1") // subscriber is a Spy(), used as a Mock, uses real 'receive' function
+}
+Summary:
+
+A Stub() is a Stub.
+A Mock() is a Stub and Mock.
+A Spy() is a Stub, Mock and Spy.
+Avoid using Mock() if Stub() is sufficient.
+
+Avoid using Spy() if you can, having to do so could be a smell and hints at incorrect test or incorrect design of object under test.
+--------------------------------------------------------------
+
+Stub - an object that provides predefined answers to method calls.
+
+Mock - an object on which you set expectations.
+
+Fake - an object with limited capabilities (for the purposes of testing), e.g. a fake web service.
+
+Test Double is the general term for stubs, mocks and fakes. But informally, you'll often hear people simply call them mocks.
+---------------------------------------------------------------
+
+A stub is a controllable replacement for an existing dependency (or collaborator) in the system. By using a stub, you can test your code without dealing with the dependency directly.
+
+The main thing to remember about mocks versus stubs is that mocks are just like stubs, but you assert against the mock object, whereas you do not assert against a stub.
+-----------------------------------------------------------
+
+Fake: a class that implements an interface but contains fixed data and no logic. Simply returns "good" or "bad" data depending on the implementation.
+
+Mock: a class that implements an interface and allows the ability to dynamically set the values to return/exceptions to throw from particular methods and provides the ability to check if particular methods have been called/not called.
+
+Stub: Like a mock class, except that it doesn't provide the ability to verify that methods have been called/not called.

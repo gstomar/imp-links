@@ -1,0 +1,8 @@
+The features that Java 10 seems most likely to contain are those with JEPs currently in Targeted or Proposed to Target state. Currently, this consists of the following features:
+
+286: Local-Variable Type Inference
+296: Consolidate the JDK Forest into a Single Repository
+304: Garbage-Collector Interface
+307: Parallel Full GC for G1
+310: Application Class-Data Sharing
+312: Thread-Local Handshakes

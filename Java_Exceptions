@@ -1,0 +1,6 @@
+Never use exceptions as return code replacement or for any likely to happen events. Creating an exception is too expensive - the cost starts from approximately 1 microsecond per exception.
+
+There are 3 ways to avoid exception costs: refactor your code not to use them; cache an instance of exception or override its fillInStackTrace method.
+
+Avoid using any Number subclass parse*/valueOf methods if you call them for each piece of your data and you expect a lot of non-numerical data. Parse such values manually for top performance.
+

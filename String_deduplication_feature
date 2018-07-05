@@ -1,0 +1,240 @@
+String deduplication feature (from Java 8 update 20)
+5 Replies
+by Mikhail Vorontsov
+
+This article will provide you a short overview of a string deduplication feature added into Java 8 update 20.
+
+String objects consume a large amount of memory in an average application. Some of these strings may be duplicated – there exist several distinct instances of the same String (a != b, but a.equals(b)). In practice, a lot of Strings could be duplicated due to various reasons.
+
+Originally, JDK offered String.intern() method to deal with the string duplication. The disadvantage of this method is that you have to find which strings should be interned. This generally requires a heap analysis tool with a duplicate string lookup ability, like YourKit profiler. Nevertheless, if used properly, string interning is a powerful memory saving tool – it allows you to reuse the whole String objects (each of whose is adding 24 bytes overhead to the underlying char[]).
+
+Starting from Java 7 update 6, each String object has its own private underlying char[]. This allows JVM to make an automatic optimization – if an underlying char[] is never exposed to the client, then JVM can find 2 strings with the same contents, and replace the underlying char[] of one string with an underlying char[] of another string.
+
+That’s done by the string deduplication feature added into Java 8 update 20. How it works:
+
+
+You need to use G1 garbage collector and turn this feature on: -XX:+UseG1GC -XX:+UseStringDeduplication. This feature is implemented as an optional step of G1 garbage collector and not available if you are using any other garbage collector.
+This feature may be executed during minor GC of G1 collector. In my observations, it depends on the availability of spare CPU cycles. So, don’t expect it to work in a data cruncher which has all the data to process locally. On the other hand, a web server is likely to execute it very often.
+String deduplication is looking for not processed strings, calculates their hash codes (if not calculated before by the application code) and then looks if there are any other strings with the same hash code and the equal underlying char[]. If found – it replaces a new string char[] with an existing string char[].
+String deduplication is processing only strings which have survived a few garbage collections. This ensures that a majority of very short living strings will not be processed. The minimal string age is managed by -XX:StringDeduplicationAgeThreshold=3 JVM parameter (3 is the default value of this parameter).
+There are several important consequences of this implementation:
+
+Yes, you need to use G1 collector if you want a free lunch string deduplication feature. You can’t use it with a parallel GC, which is generally a better choice for applications favoring throughput over latency.
+String deduplication is unlikely to run on the loaded system. To check if it is invoked, run JVM with -XX:+PrintStringDeduplicationStatistics option and look at the console output.
+If you need to save memory and you can intern strings in your application – do it, don’t rely on string deduplication. Keep in mind that string deduplication will process all (or at least most of) your strings – it means that even if you know that a given variable contents are unique (GUID, for example), JVM does not know about it and will try to match it to the other strings. As a result, string deduplication CPU cost depends both on the number of strings in the heap (a new string will be compared with some of them) and a number of strings you create between string deduplications (these strings will be compared to the heap strings). Use -XX:+PrintStringDeduplicationStatistics JVM option on the multi gigabyte heaps to check the impact of this feature.
+On the other hand, this is done in mostly non-blocked fashion, so if your server has enough spare CPU capacity, why not to use it? 🙂
+Finally, remember that String.intern will allow you to target only a subset of strings in your application which is known to contain duplicates. Generally it means a smaller pool of interned strings to compare with, which means you can use your CPU more efficiently. Besides, it allows you to intern full String objects, thus saving extra 24 bytes per string.
+Here is a test class I have used to experiment with this feature. Each of 3 tests is running until JVM will throw OOM, so you have to run them separately.
+
+The first test creates strings with unique content, but it is useful if you want to estimate the time it takes to deduplicate the strings when there is a huge number of them in the heap. Try to give as much heap as you can to the first test – the more strings it will create, the better.
+
+The second and the third tests compare deduplication (second test) and interning (third test). You need to run them with the identical Xmx setting. I have tuned the constant in the program for Xmx256M, but you cam allocate more. Anyway, you will see that deduplication test will fail after less iterations then interning test. Why? Because we have only 100 distinct strings in these tests, so interning them means that the only memory you need is the list where those strings are stored. Deduplication, on the other hand, leaves distinct String objects, canonicalizing only the underlying char[].
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+/**
+ * String deduplication vs interning test
+ */
+public class StringDedupTest {
+    private static final int MAX_EXPECTED_ITERS = 300;
+    private static final int FULL_ITER_SIZE = 100 * 1000;
+ 
+    //30M entries = 120M RAM (for 300 iters)
+    private static List<String> LIST = new ArrayList<>( MAX_EXPECTED_ITERS * FULL_ITER_SIZE );
+ 
+    public static void main(String[] args) throws InterruptedException {
+        //24+24 bytes per String (24 String shallow, 24 char[])
+        //136M left for Strings
+ 
+        //Unique, dedup
+        //136M / 2.9M strings = 48 bytes (exactly String size)
+ 
+        //Non unique, dedup
+        //4.9M Strings, 100 char[]
+        //136M / 4.9M strings = 27.75 bytes (close to 24 bytes per String + small overhead
+ 
+        //Non unique, intern
+        //We use 120M (+small overhead for 100 strings) until very late, but can't extend ArrayList 3 times - we don't have 360M
+ 
+        /*
+          Run it with: -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+PrintStringDeduplicationStatistics
+          Give as much Xmx as you can on your box. This test will show you how long does it take to
+          run a single deduplication and if it is run at all.
+          To test when deduplication is run, try changing a parameter of Thread.sleep or comment it out.
+          You may want to print garbage collection information using -XX:+PrintGCDetails -XX:+PrintGCTimestamps
+        */
+ 
+        //Xmx256M - 29 iterations
+        fillUnique();
+ 
+        /*
+         This couple of tests compare string deduplication (first test) with string interning.
+         Both tests should be run with the identical Xmx setting. I have tuned the constants in the program
+         for Xmx256M, but any higher value is also good enough.
+         The point of this tests is to show that string deduplication still leaves you with distinct String
+         objects, each of those requiring 24 bytes. Interning, on the other hand, return you existing String
+         objects, so the only memory you spend is for the LIST object.
+         */
+ 
+        //Xmx256M - 49 iterations (100 unique strings)
+        //fillNonUnique( false );
+ 
+        //Xmx256M - 299 iterations (100 unique strings)
+        //fillNonUnique( true );
+    }
+ 
+    private static void fillUnique() throws InterruptedException {
+        int iters = 0;
+        final UniqueStringGenerator gen = new UniqueStringGenerator();
+        while ( true )
+        {
+            for ( int i = 0; i < FULL_ITER_SIZE; ++i )
+                LIST.add( gen.nextUnique() );
+            Thread.sleep( 300 );
+            System.out.println( "Iteration " + (iters++) + " finished" );
+        }
+    }
+ 
+    private static void fillNonUnique( final boolean intern ) throws InterruptedException {
+        int iters = 0;
+        final UniqueStringGenerator gen = new UniqueStringGenerator();
+        while ( true )
+        {
+            for ( int i = 0; i < FULL_ITER_SIZE; ++i )
+                LIST.add( intern ? gen.nextNonUnique().intern() : gen.nextNonUnique() );
+            Thread.sleep( 300 );
+            System.out.println( "Iteration " + (iters++) + " finished" );
+        }
+    }
+ 
+    private static class UniqueStringGenerator
+    {
+        private char upper = 0;
+        private char lower = 0;
+ 
+        public String nextUnique()
+        {
+            final String res = String.valueOf( upper ) + lower;
+            if ( lower < Character.MAX_VALUE )
+                lower++;
+            else
+            {
+                upper++;
+                lower = 0;
+            }
+            return res;
+        }
+ 
+        public String nextNonUnique()
+        {
+            final String res = "a" + lower;
+            if ( lower < 100 )
+                lower++;
+            else
+                lower = 0;
+            return res;
+        }
+    }
+}

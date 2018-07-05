@@ -1,0 +1,104 @@
+Java Threads
+
+What is Thread Group? Why it’s advised not to use it?
+ThreadGroup is a class which was intended to provide information about a thread group. ThreadGroup API is weak and it doesn’t have any functionality that is not provided by Thread. Two of the major feature it had are to get the list of active threads in a thread group and to set the uncaught exception handler for the thread. But Java 1.5 has added setUncaughtExceptionHandler(UncaughtExceptionHandler eh) method using which we can add uncaught exception handler to the thread. So ThreadGroup is obsolete and hence not advised to use anymore.
+
+What is Lock interface in Java Concurrency API? What are it’s benefits over synchronization?
+Lock interface provide more extensive locking operations than can be obtained using synchronized methods and statements. They allow more flexible structuring, may have quite different properties, and may support multiple associated Condition objects.
+The advantages of a lock are
+it’s possible to make them fair
+it’s possible to make a thread responsive to interruption while waiting on a Lock object.
+it’s possible to try to acquire the lock, but return immediately or after a timeout if the lock can’t be acquired
+it’s possible to acquire and release locks in different scopes, and in different orders
+
+What is BlockingQueue? How can we implement Producer-Consumer problem using Blocking Queue?
+java.util.concurrent.BlockingQueue is a Queue that supports operations that wait for the queue to become non-empty when retrieving and removing an element, and wait for space to become available in the queue when adding an element.
+BlockingQueue doesn’t accept null values and throw NullPointerException if you try to store null value in the queue.
+BlockingQueue implementations are thread-safe. All queuing methods are atomic in nature and use internal locks or other forms of concurrency control.
+BlockingQueue interface is part of java collections framework and it’s primarily used for implementing producer consumer problem.
+
+FutureTask is the base implementation class of Future interface and we can use it with Executors for asynchronous processing. Most of the time we don’t need to use FutureTask class but it comes real handy if we want to override some of the methods of Future interface and want to keep most of the base implementation. We can just extend this class and override the methods according to our requirements.
+
+Java 8 New Methods
+Collection API improvements
+
+We have already seen forEach() method and Stream API for collections. Some new methods added in Collection API are:
+
+Iterator default method forEachRemaining(Consumer action) to perform the given action for each remaining element until all elements have been processed or the action throws an exception.
+Collection default method removeIf(Predicate filter) to remove all of the elements of this collection that satisfy the given predicate.
+Collection spliterator() method returning Spliterator instance that can be used to traverse elements sequentially or parallel.
+Map replaceAll(), compute(), merge() methods.
+Performance Improvement for HashMap class with Key Collisions
+
+Concurrency API improvements
+
+Some important concurrent API enhancements are:
+
+ConcurrentHashMap compute(), forEach(), forEachEntry(), forEachKey(), forEachValue(), merge(), reduce() and search() methods.
+CompletableFuture that may be explicitly completed (setting its value and status).
+Executors newWorkStealingPool() method to create a work-stealing thread pool using all available processors as its target parallelism level.
+
+Java IO improvements
+
+Some IO improvements known to me are:
+
+Files.list(Path dir) that returns a lazily populated Stream, the elements of which are the entries in the directory.
+Files.lines(Path path) that reads all lines from a file as a Stream.
+Files.find() that returns a Stream that is lazily populated with Path by searching for files in a file tree rooted at a given starting file.
+BufferedReader.lines() that return a Stream, the elements of which are lines read from this BufferedReader.
+
+Miscellaneous Core API improvements
+
+Some misc API improvements that might come handy are:
+
+ThreadLocal static method withInitial(Supplier supplier) to create instance easily.
+Comparator interface has been extended with a lot of default and static methods for natural ordering, reverse order etc.
+min(), max() and sum() methods in Integer, Long and Double wrapper classes.
+logicalAnd(), logicalOr() and logicalXor() methods in Boolean class.
+ZipFile.stream() method to get an ordered Stream over the ZIP file entries. Entries appear in the Stream in the order they appear in the central directory of the ZIP file.
+Several utility methods in Math class.
+jjs command is added to invoke Nashorn Engine.
+jdeps command is added to analyze class files
+JDBC-ODBC Bridge has been removed.
+PermGen memory space has been removed
+
+What are the major drawbacks of External Iteration?
+External Iteration has the following drawbacks:
+We need to write code in Imperative Style.
+There is no clear separation of Responsibilities. Tightly-Coupling between “What is to be done” and “How it is to be done” code.
+Less Readable Code.
+More Verbose and Boilerplate code.
+We have to iterate elements in Sequential order only.
+It does not support Concurrency and Parallelism properly.
+
+What are the major advantages of Internal Iteration over External Iteration?
+Compare to External Iteration, Internal Iteration has the following advantages:
+As it follows Functional Programming style, we can write Declarative Code.
+More Readable and concise code.
+Avoids writing Verbose and Boilerplate code
+No need to iterate elements in Sequential order.
+It supports Concurrency and Parallelism properly.
+We can write Parallel code to improve application performance.
+Clear separation of Responsibilities. Loosely-Coupling between “What is to be done” and “How it is to be done” code.
+We need to write code only about “What is to be done” and Java API takes care about “How it is to be done” code.
+
+What is the major drawback of Internal Iteration over External Iteration?
+Compare to External Iteration, Internal Iteration has one major drawback:
+In Internal Iteration, as Java API takes care about Iterating elements internally, we do NOT have control over Iteration.
+
+What are the Differences between Java’s OLD Java Date API and Java 8’s Date and Time API?
+
+Differences between Java’s OLD Java Date API and Java 8’s Date and Time API:
+
+S.NO.	JAVA’S OLD JAVA DATE API	JAVA 8’S DATE AND TIME API
+1.	Available before Java 8 too.	It is introduced in Java SE 8
+2.	Not Thread Safe.	Thread Safe.
+3.	Mutable API.	Immutable API.
+4.	Less Performance.	Better Performance.
+5.	Less Readability.	More Readability.
+6.	It’s not recommended to use as its deprecated.	It’s always recommended to use.
+7.	Not Extendable.	Easy to Extend.
+8.	It defines months values from 0 to 11, that is January = 0.	It defines months values from 1 to 12, that is January = 1.
+9.	It’s an old API.	It’s a new API.
+
+
